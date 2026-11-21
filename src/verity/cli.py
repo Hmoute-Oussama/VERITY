@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -54,10 +55,11 @@ from .integrations import (
 )
 from .models import ClaimDraft, ClaimStatus, EvidenceStatus, Risk, Verdict
 from .snapshot import build_agent_context, build_snapshot
-from .util import dump_yaml, relpath
+from .util import dump_yaml, relpath, run_command
 from .validation import validate_config, validate_contracts
-from .output import json_envelope, dumps_versioned
-from .evidence_bundle import write_evidence_bundle
+from .output import json_envelope, dumps_versioned, junit_xml, sarif_report
+from .evidence_bundle import verify_bundle, write_evidence_bundle
+from .plugins import discover_plugins
 
 app = typer.Typer(
     add_completion=False,
@@ -832,10 +834,25 @@ def export_evidence(
     ctx: typer.Context,
     out: Path = typer.Option("verity-evidence-bundle.json", "--out", "-o"),
     private_key: Path | None = typer.Option(None, "--private-key"),
+    format: str = typer.Option("bundle", "--format", "-f", help="bundle | junit | sarif"),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
-    """Export a canonical evidence bundle, optionally signed with Ed25519."""
+    """Export evidence as a bundle, JUnit XML, or SARIF JSON."""
     engine = _engine(ctx)
+    if format.lower() in {"junit", "sarif"}:
+        status = engine.status()
+        results = [
+            {"id": claim.id, "claim": claim.text, "status": claim.status}
+            for claim in status.claims
+        ]
+        if format.lower() == "junit":
+            text = junit_xml(results)
+            out.write_text(text, encoding="utf-8")
+        else:
+            out.write_text(json.dumps(sarif_report(results), indent=2), encoding="utf-8")
+        engine.repo.close()
+        console.print(f"[green]wrote[/green] {escape(str(out))}")
+        return
     try:
         target = write_evidence_bundle(engine, out, private_key=private_key)
     except RuntimeError as exc:
@@ -846,6 +863,60 @@ def export_evidence(
         console.print_json(dumps_versioned("export", {"path": str(target), "signed": private_key is not None}))
     else:
         console.print(f"[green]wrote[/green] {escape(str(target))}")
+
+
+@app.command("keygen")
+def keygen(
+    private_key: Path = typer.Option(".verity/evidence-signing-private.pem", "--private-key"),
+    public_key: Path = typer.Option(".verity/evidence-signing-public.pem", "--public-key"),
+) -> None:
+    """Generate an Ed25519 key pair for evidence bundle signing."""
+    try:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    except ImportError:
+        err_console.print("[red]Install signing support: pip install verity-evidence[signing][/red]")
+        raise typer.Exit(2)
+    key = Ed25519PrivateKey.generate()
+    private_key.parent.mkdir(parents=True, exist_ok=True)
+    public_key.parent.mkdir(parents=True, exist_ok=True)
+    private_key.write_bytes(
+        key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    )
+    public_key.write_bytes(
+        key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    )
+    try:
+        private_key.chmod(0o600)
+    except OSError:
+        pass
+    console.print(f"[green]wrote[/green] {escape(str(private_key))}")
+    console.print(f"[green]wrote[/green] {escape(str(public_key))}")
+
+
+@app.command("verify-bundle")
+def verify_evidence_bundle(
+    bundle: Path,
+    public_key: Path,
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Verify a SHA-256/Ed25519 evidence bundle."""
+    try:
+        data = json.loads(bundle.read_text(encoding="utf-8"))
+        valid = verify_bundle(data, public_key.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
+        if json_out:
+            console.print_json(json.dumps({"valid": False, "error": str(exc)}))
+        else:
+            err_console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(1)
+    if json_out:
+        console.print_json(json.dumps({"valid": valid}, indent=2))
+    elif valid:
+        console.print("[green]Evidence bundle signature is valid.[/green]")
+    else:
+        console.print("[red]Evidence bundle signature is invalid or missing.[/red]")
+    raise typer.Exit(0 if valid else 1)
 
 
 @app.command()
@@ -1062,9 +1133,19 @@ def run(
     if decision.verdict.value == "block":
         raise typer.Exit(2)
     engine.repo.record_event("action_executed", decision.to_dict())
-    import subprocess
-
-    proc = subprocess.run(action, cwd=str(engine.root), shell=True)
+    argv = shlex.split(action, posix=os.name != "nt")
+    if not argv:
+        raise typer.Exit(2)
+    proc = run_command(
+        argv,
+        engine.root,
+        timeout=engine.config.verification.timeout_seconds,
+        shell=False,
+    )
+    if proc.stdout:
+        console.print(proc.stdout, end="")
+    if proc.stderr:
+        err_console.print(proc.stderr, end="")
     raise typer.Exit(proc.returncode)
 
 
@@ -1389,6 +1470,35 @@ def verifiers(
             str(spec["kind"]),
             str(spec["proof"]),
             ", ".join(str(arg) for arg in spec["args"]),
+        )
+    console.print(table)
+
+
+@app.command("plugins")
+def plugins(
+    ctx: typer.Context,
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """List declarative community verifier plugins."""
+    root = _root(ctx)
+    items = [plugin.to_dict() for plugin in discover_plugins(root)]
+    if json_out:
+        console.print_json(json.dumps(items, indent=2))
+        return
+    if not items:
+        console.print("[bright_black]No plugins configured. Create .verity/plugins.yaml.[/bright_black]")
+        return
+    table = Table(box=None, pad_edge=False, header_style="bold bright_black")
+    table.add_column("Plugin", style="cyan")
+    table.add_column("Verifier")
+    table.add_column("Package")
+    table.add_column("Verified")
+    for item in items:
+        table.add_row(
+            str(item["name"]),
+            str(item["verifier"]),
+            str(item["package"]),
+            "yes" if item["verified"] else "no",
         )
     console.print(table)
 

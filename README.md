@@ -34,7 +34,7 @@ pipx install verity-evidence
 verity --version
 ```
 
-**Now available on PyPI — [verity-evidence v0.2.0](https://pypi.org/project/verity-evidence/)**
+**Stable on PyPI — [verity-evidence v1.0.0](https://pypi.org/project/verity-evidence/)**
 
 </div>
 
@@ -135,7 +135,7 @@ Isolated installation:
 pipx install verity-evidence
 ```
 
-Beta package release: **`v0.2.0`** · Release workflow and PyPI attestation verified.
+Production release: **`v1.0.0`** · Release workflow and PyPI attestation verified.
 
 </div>
 
@@ -169,7 +169,7 @@ Verify the installed release:
 
 ```bash
 verity --version
-# VERITY 0.2.0 — ...
+# VERITY 1.0.0 — ...
 ```
 
 From source:

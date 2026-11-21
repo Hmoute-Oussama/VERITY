@@ -41,6 +41,16 @@
       "additionalProperties": true
     },
     "database": {"type": "object"},
+    "team": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "organization": {"type": "string"},
+        "evidence_server": {"type": "string"},
+        "require_signed_bundles": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
     "ignore": {"type": "array", "items": {"type": "string"}}
   },
   "additionalProperties": true

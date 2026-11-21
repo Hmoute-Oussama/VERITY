@@ -5,6 +5,21 @@ All notable user-visible changes to VERITY will be documented in this file.
 The format follows Keep a Changelog principles and release numbers follow
 Semantic Versioning.
 
+## [1.0.0] - 2026-11-21
+
+### Added
+
+- Stable public CLI and API version 1.0.
+- Reproducible evidence bundles and SHA-256 integrity.
+- Optional Ed25519 bundle signing and verification.
+- JUnit XML and SARIF evidence exports.
+- Sandboxed execution defaults and credential filtering.
+- Deployment configuration verifier.
+- Community plugin manifest discovery.
+- Team metadata in evidence bundles.
+- MCP conformance, adversarial, and signing tests.
+- Governance and RFC documentation.
+
 ## [Unreleased]
 
 ### Added

@@ -288,3 +288,17 @@ def test_sbom_spdx_package(engine):
         '{"spdxVersion":"SPDX-2.3","packages":[{"name":"react","SPDXID":"SPDXRef-Package-react"}]}'
     )
     assert run(engine, "sbom", path="sbom.spdx.json", package="react").status.value == "pass"
+
+
+def test_deployment_config_detects_compose(engine):
+    (engine.root / "compose.yaml").write_text(
+        "services:\n  api:\n    image: example/api:1.0\n"
+    )
+    result = run(engine, "deployment_config", paths=["compose.yaml"])
+    assert result.status.value == "pass"
+    assert "compose.yaml" in result.dependencies
+
+
+def test_deployment_config_missing(engine):
+    result = run(engine, "deployment_config", paths=["missing-deploy.yaml"])
+    assert result.status.value == "fail"

@@ -50,6 +50,8 @@ class VerificationConfig:
     )
     max_output_chars: int = 6000
     security_scan: bool = True
+    sandboxed_execution: bool = True
+    reproducibility_environment: bool = True
 
 
 @dataclass
@@ -70,12 +72,21 @@ class PolicyConfig:
 
 
 @dataclass
+class TeamConfig:
+    name: str = ""
+    organization: str = ""
+    evidence_server: str = ""
+    require_signed_bundles: bool = False
+
+
+@dataclass
 class Config:
     version: int = 1
     project: str = ""
     verification: VerificationConfig = field(default_factory=VerificationConfig)
     evidence: EvidenceConfig = field(default_factory=EvidenceConfig)
     policy: PolicyConfig = field(default_factory=PolicyConfig)
+    team: TeamConfig = field(default_factory=TeamConfig)
     database: dict[str, Any] = field(default_factory=dict)
     ignore: list[str] = field(default_factory=list)
     raw: dict[str, Any] = field(default_factory=dict)
@@ -112,6 +123,11 @@ class Config:
             for key, value in policy.items():
                 if hasattr(cfg.policy, key) and value is not None:
                     setattr(cfg.policy, key, value)
+        team = data.get("team") or {}
+        if isinstance(team, dict):
+            for key, value in team.items():
+                if hasattr(cfg.team, key) and value is not None:
+                    setattr(cfg.team, key, value)
 
         if isinstance(data.get("database"), dict):
             cfg.database = data["database"]
@@ -131,6 +147,8 @@ class Config:
                 "http_allow_hosts": self.verification.http_allow_hosts,
                 "max_output_chars": self.verification.max_output_chars,
                 "security_scan": self.verification.security_scan,
+                "sandboxed_execution": self.verification.sandboxed_execution,
+                "reproducibility_environment": self.verification.reproducibility_environment,
             },
             "evidence": {
                 "ttl_seconds": self.evidence.ttl_seconds,
@@ -144,6 +162,12 @@ class Config:
                 "deny_commands": self.policy.deny_commands,
                 "allow_commands": self.policy.allow_commands,
                 "require_verification_before_push": self.policy.require_verification_before_push,
+            },
+            "team": {
+                "name": self.team.name,
+                "organization": self.team.organization,
+                "evidence_server": self.team.evidence_server,
+                "require_signed_bundles": self.team.require_signed_bundles,
             },
             "database": self.database,
             "ignore": self.ignore,

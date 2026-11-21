@@ -141,3 +141,18 @@ def test_mcp_unknown_resource_returns_protocol_error(project):
         server.engine.repo.close()
 
     assert response["error"]["code"] == -32602
+
+
+def test_mcp_unknown_method_returns_protocol_error(project):
+    server = McpServer(project)
+    try:
+        response = server.handle({
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "unknown/method",
+            "params": {},
+        })
+    finally:
+        server.engine.repo.close()
+
+    assert response["error"]["code"] == -32601

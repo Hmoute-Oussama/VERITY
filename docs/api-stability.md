@@ -1,6 +1,6 @@
 # VERITY 1.0 compatibility contract
 
-VERITY's beta-to-1.0 API is intentionally small and explicit.
+VERITY's 1.0 API is intentionally small and explicit.
 
 ## Stable surfaces
 

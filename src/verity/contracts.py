@@ -30,6 +30,7 @@ VERIFIER_KINDS = {
     "security_analysis": ClaimKind.SECURITY.value,
     "database_schema": ClaimKind.SCHEMA.value,
     "http_probe": ClaimKind.BEHAVIOR.value,
+    "deployment_config": ClaimKind.DEPLOYMENT.value,
     "command": ClaimKind.BEHAVIOR.value,
     "manual": ClaimKind.GENERIC.value,
     "none": ClaimKind.GENERIC.value,

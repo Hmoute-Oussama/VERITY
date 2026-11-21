@@ -44,6 +44,7 @@ def get_verifier(name: str) -> Verifier:
         "security_analysis": security.SecurityAnalysisVerifier(),
         "database_schema": runtime.DatabaseSchemaVerifier(),
         "http_probe": runtime.HttpProbeVerifier(),
+        "deployment_config": runtime.DeploymentConfigVerifier(),
         "command": runtime.CommandVerifier(),
         "manual": runtime.ManualVerifier(),
         "none": runtime.NoneVerifier(),

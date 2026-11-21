@@ -184,3 +184,43 @@ def test_export_evidence_bundle(project: Path):
     assert data["schema"] == "verity.evidence-bundle.v1"
     assert data["integrity"]["algorithm"] == "sha256"
     assert len(data["integrity"]["digest"]) == 64
+
+
+def test_plugins_catalog_is_safe_and_declarative(tmp_path: Path):
+    (tmp_path / ".verity").mkdir()
+    (tmp_path / ".verity" / "plugins.yaml").write_text(
+        "plugins:\n"
+        "  community:\n"
+        "    name: Community verifier\n"
+        "    package: verity-community\n"
+        "    verifier: community_check\n"
+        "    verified: false\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["-C", str(tmp_path), "plugins", "--json"])
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data[0]["id"] == "community"
+    assert data[0]["verified"] is False
+
+
+def test_export_supports_sarif(project: Path):
+    path = project / "verity.sarif.json"
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "export", "--format", "sarif", "--out", str(path)],
+    )
+    assert result.exit_code == 0
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["version"] == "2.1.0"
+    assert data["runs"]
+
+
+def test_export_supports_junit(project: Path):
+    path = project / "verity.xml"
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "export", "--format", "junit", "--out", str(path)],
+    )
+    assert result.exit_code == 0
+    assert "<testsuite" in path.read_text(encoding="utf-8")

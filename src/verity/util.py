@@ -244,6 +244,17 @@ def run_command(
     merged_env = os.environ.copy()
     if env:
         merged_env.update(env)
+    # Sandboxed execution starts with the host environment stripped of common
+    # credential-bearing variables. Explicit env values are opt-in.
+    secret_prefixes = (
+        "AWS_", "AZURE_", "GCP_", "GOOGLE_APPLICATION_", "GH_", "GITHUB_",
+        "NPM_", "PYPI_", "OPENAI_", "ANTHROPIC_", "CODEX_", "COPILOT_",
+    )
+    merged_env = {
+        key: value
+        for key, value in merged_env.items()
+        if not key.upper().startswith(secret_prefixes)
+    }
     merged_env.setdefault("PYTHONUNBUFFERED", "1")
     # Never let a nested agent session think it is interactive.
     merged_env.setdefault("CI", "1")

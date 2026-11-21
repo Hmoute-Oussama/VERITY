@@ -14,6 +14,8 @@
     "evidence": {"type": "array"},
     "dependencies": {"type": "array"},
     "integrity": {"type": "object", "required": ["algorithm", "digest"], "properties": {"algorithm": {"const": "sha256"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "reproducibility": {"type": "object"},
+    "team": {"type": "object"},
     "signature": {"type": "object", "required": ["algorithm", "value"], "properties": {"algorithm": {"const": "ed25519"}, "value": {"type": "string"}}}
   },
   "additionalProperties": false

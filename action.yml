@@ -28,7 +28,9 @@ runs:
       run: verity --root "${{ inputs.root }}" init --no-gitignore
     - name: Check evidence contracts
       shell: bash
-      run: verity --root "${{ inputs.root }}" contract check --json
+      run: |
+        verity --root "${{ inputs.root }}" contract check --json
+        verity --root "${{ inputs.root }}" verify --fail-on "${{ inputs.fail-on }}" --json
     - name: Write snapshot
       if: ${{ inputs.snapshot == 'true' }}
       shell: bash

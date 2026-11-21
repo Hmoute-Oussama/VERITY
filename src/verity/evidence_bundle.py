@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +73,22 @@ def export_evidence_bundle(engine: Engine) -> dict[str, Any]:
         "evidence": evidence_items,
         "dependencies": dependencies,
     }
+    if engine.config.verification.reproducibility_environment:
+        body["reproducibility"] = {
+            "os": platform.system(),
+            "os_release": platform.release(),
+            "architecture": platform.machine(),
+            "python": platform.python_version(),
+            "executable": sys.executable,
+            "cwd": str(engine.root),
+            "ci": bool(os.environ.get("CI")),
+        }
+    if engine.config.team.name or engine.config.team.organization:
+        body["team"] = {
+            "name": engine.config.team.name,
+            "organization": engine.config.team.organization,
+            "evidence_server": engine.config.team.evidence_server,
+        }
     digest = hashlib.sha256(canonical_json(body)).hexdigest()
     body["integrity"] = {"algorithm": "sha256", "digest": digest}
     return body
@@ -89,6 +108,36 @@ def sign_bundle(bundle: dict[str, Any], private_key_pem: str) -> dict[str, Any]:
     signature = key.sign(canonical_json(unsigned)).hex()
     bundle["signature"] = {"algorithm": "ed25519", "value": signature}
     return bundle
+
+
+def verify_bundle(bundle: dict[str, Any], public_key_pem: str) -> bool:
+    try:
+        from cryptography.exceptions import InvalidSignature
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    except ImportError as exc:
+        raise RuntimeError("Ed25519 verification requires the 'cryptography' package") from exc
+    integrity = bundle.get("integrity")
+    if not isinstance(integrity, dict) or integrity.get("algorithm") != "sha256":
+        return False
+    unsigned_integrity = dict(bundle)
+    unsigned_integrity.pop("integrity", None)
+    unsigned_integrity.pop("signature", None)
+    if hashlib.sha256(canonical_json(unsigned_integrity)).hexdigest() != integrity.get("digest"):
+        return False
+    signature = bundle.get("signature")
+    if not isinstance(signature, dict) or signature.get("algorithm") != "ed25519":
+        return False
+    public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+    if not isinstance(public_key, Ed25519PublicKey):
+        raise RuntimeError("Evidence bundle verification requires an Ed25519 public key")
+    unsigned = dict(bundle)
+    unsigned.pop("signature", None)
+    try:
+        public_key.verify(bytes.fromhex(str(signature.get("value") or "")), canonical_json(unsigned))
+        return True
+    except (InvalidSignature, ValueError):
+        return False
 
 
 def write_evidence_bundle(engine: Engine, path: Path, *, private_key: Path | None = None) -> Path:

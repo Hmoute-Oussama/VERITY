@@ -27,3 +27,4 @@ runs:
       run: |
         verity --root "${{ inputs.root }}" validate --json
         verity --root "${{ inputs.root }}" contract check --json
+        verity --root "${{ inputs.root }}" verify --fail-on "${{ inputs.fail-on }}" --json

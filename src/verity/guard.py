@@ -9,15 +9,16 @@ from __future__ import annotations
 import ast
 import importlib.util
 import json
+import os
 import re
-import subprocess
+import shlex
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .engine import Engine
 from .models import Decision, DependencyCheck, Risk, Verdict
-from .util import CODE_EXTS, glob_paths, load_json, load_yaml, read_text, relpath, which
+from .util import CODE_EXTS, glob_paths, load_json, load_yaml, read_text, relpath, run_command, which
 
 STDLIB = set(getattr(sys, "stdlib_module_names", set()))
 _PATH_TOKEN = re.compile(
@@ -490,7 +491,14 @@ def execute_guarded(engine: Engine, action: str, *, strict: bool | None = None) 
         return 2
     engine.repo.record_event("action_executed", decision.to_dict())
     try:
-        proc = subprocess.run(action, cwd=str(engine.root), shell=True)
+        argv = shlex.split(action, posix=os.name != "nt")
+        if not argv:
+            return 2
+        proc = run_command(argv, engine.root, timeout=engine.config.verification.timeout_seconds, shell=False)
+        if proc.stdout:
+            print(proc.stdout, end="")
+        if proc.stderr:
+            print(proc.stderr, end="", file=sys.stderr)
         return proc.returncode
     except OSError as exc:
         print(f"VERITY: failed to execute action: {exc}", file=sys.stderr)

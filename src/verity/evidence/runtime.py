@@ -210,6 +210,52 @@ class DatabaseSchemaVerifier:
         )
 
 
+class DeploymentConfigVerifier:
+    name = "deployment_config"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        paths = [str(p) for p in (claim.args.get("paths") or claim.args.get("path") or [])]
+        if isinstance(paths, str):
+            paths = [paths]
+        if not paths:
+            paths = ["compose.yaml", "compose.yml", "docker-compose.yml", "kubernetes", "k8s", "deploy"]
+        files: list[Path] = []
+        for pattern in paths:
+            if "*" in pattern or "?" in pattern:
+                for path in walk_files(ctx.root, exts={".yaml", ".yml", ".json"}, limit=3000):
+                    if re.search(pattern.replace("*", ".*").replace("?", "."), relpath(path, ctx.root)):
+                        files.append(path)
+            else:
+                candidate = ctx.root / pattern
+                if candidate.is_dir():
+                    files.extend(walk_files(candidate, exts={".yaml", ".yml", ".json"}, limit=3000))
+                elif candidate.is_file():
+                    files.append(candidate)
+        if not files:
+            return fail(
+                "No deployment configuration was found",
+                details="Checked: " + ", ".join(paths),
+                payload={"checked": paths},
+            )
+        deps = sorted({relpath(path, ctx.root) for path in files})
+        text = "\n".join(read_text(path) for path in files)
+        if re.search(r"(?i)\b(kind:\s*(Deployment|StatefulSet|DaemonSet|Service)|services\s*:)", text):
+            return ok(
+                f"Deployment configuration detected in {len(files)} file(s)",
+                details=", ".join(deps[:20]),
+                payload={"files": deps, "deployed": False},
+                deps=deps,
+                confidence=0.7,
+            )
+        return warn(
+            "Deployment files exist but no recognized runtime structure was found",
+            details=", ".join(deps[:20]),
+            payload={"files": deps},
+            deps=deps,
+            confidence=0.35,
+        )
+
+
 class HttpProbeVerifier:
     name = "http_probe"
 
