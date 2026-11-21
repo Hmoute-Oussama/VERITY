@@ -56,7 +56,7 @@ class FileExistsVerifier:
                 deps=found,
             )
         return fail(
-            "No matching file exists",
+            "No matching file exists (not found)",
             details="Checked: " + ", ".join(checked),
             payload={"checked": checked},
             confidence=0.98,

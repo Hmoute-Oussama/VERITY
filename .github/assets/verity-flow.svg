@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title description">
+  <title id="title">VERITY evidence pipeline</title>
+  <desc id="description">An animated flow from agent claims to verified evidence</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#090d18"/>
+      <stop offset=".55" stop-color="#111827"/>
+      <stop offset="1" stop-color="#172033"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#22c55e"/>
+      <stop offset=".5" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="420" rx="24" fill="url(#bg)"/>
+  <g opacity=".09" stroke="#94a3b8">
+    <path d="M0 70H1200M0 140H1200M0 210H1200M0 280H1200M0 350H1200"/>
+    <path d="M100 0V420M200 0V420M300 0V420M400 0V420M500 0V420M600 0V420M700 0V420M800 0V420M900 0V420M1000 0V420M1100 0V420"/>
+  </g>
+
+  <g fill="none" stroke="url(#line)" stroke-width="5" stroke-linecap="round">
+    <path d="M210 210H345"/>
+    <path d="M450 210H585"/>
+    <path d="M690 210H825"/>
+    <path d="M930 210H1065"/>
+  </g>
+  <g fill="#38bdf8" filter="url(#glow)">
+    <circle r="9">
+      <animateMotion dur="3.2s" repeatCount="indefinite" path="M210 210H1065"/>
+      <animate attributeName="fill" values="#22c55e;#38bdf8;#a855f7;#22c55e" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <g font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">
+    <g transform="translate(130 210)">
+      <circle r="74" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+      <circle r="62" fill="#22c55e" opacity=".08"/>
+      <path d="M-24 4l16 16 34-42" fill="none" stroke="#86efac" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <text y="112" fill="#e2e8f0" font-size="20" font-weight="700">CLAIM</text>
+    </g>
+    <g transform="translate(398 210)">
+      <circle r="74" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+      <circle r="62" fill="#38bdf8" opacity=".08"/>
+      <path d="M-28-4H28M-28 10H28M-28 24H18" stroke="#7dd3fc" stroke-width="7" stroke-linecap="round"/>
+      <text y="112" fill="#e2e8f0" font-size="20" font-weight="700">EXTRACT</text>
+    </g>
+    <g transform="translate(638 210)">
+      <circle r="74" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+      <circle r="62" fill="#a855f7" opacity=".08"/>
+      <path d="M-35-22l35 22-35 22M-35 22V-22" fill="none" stroke="#c4b5fd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <text y="112" fill="#e2e8f0" font-size="20" font-weight="700">VERIFY</text>
+    </g>
+    <g transform="translate(878 210)">
+      <circle r="74" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+      <circle r="62" fill="#22c55e" opacity=".08"/>
+      <circle r="28" fill="none" stroke="#86efac" stroke-width="7">
+        <animate attributeName="r" values="24;31;24" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <text y="112" fill="#e2e8f0" font-size="20" font-weight="700">EVIDENCE</text>
+    </g>
+    <g transform="translate(1118 210)">
+      <circle r="74" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+      <circle r="62" fill="#f59e0b" opacity=".08"/>
+      <path d="M-30 28V-28H30V28Z" fill="none" stroke="#fde68a" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M-30-28l60 56M30-28l-60 56" stroke="#f59e0b" stroke-width="3" opacity=".7"/>
+      <text y="112" fill="#e2e8f0" font-size="20" font-weight="700">REALITY</text>
+    </g>
+  </g>
+</svg>

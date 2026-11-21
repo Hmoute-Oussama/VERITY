@@ -50,13 +50,12 @@ jobs:
           block = (
               "<!-- PROJECT-PULSE:START -->\n"
               "## Project pulse\n\n"
-              "```text\n"
-              f"Commits       {commits:>6}\n"
-              f"Python files  {python_files:>6}\n"
-              f"Test modules  {test_files:>6}\n"
-              f"Verifiers     {verifiers:>6}\n"
-              "```\n\n"
-              f"**Branch:** `{branch}` · **Latest:** `{latest}` · **Pulse:** `{refreshed}`\n"
+              '<div align="center">\n\n'
+              "| COMMITS | PYTHON | TESTS | VERIFIERS |\n"
+              "|:---:|:---:|:---:|:---:|\n"
+              f"| **{commits}** | **{python_files}** | **{test_files}** | **{verifiers}** |\n\n"
+              f"**Branch:** `{branch}` · **Latest:** `{latest}` · **Pulse:** `{refreshed}`\n\n"
+              "</div>\n"
               "<!-- PROJECT-PULSE:END -->"
           )
 

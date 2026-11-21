@@ -47,7 +47,7 @@ def test_events_are_recorded(engine):
 
     events = engine.repo.events()
     assert events[0]["type"] == "test_event"
-    assert '"answer": 42' in events[0]["payload"]
+    assert events[0]["payload"] == {"answer": 42}
 
 
 def test_delete_claim(engine):

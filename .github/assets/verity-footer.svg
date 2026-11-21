@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="180" viewBox="0 0 1200 180" role="img" aria-labelledby="title">
+  <title id="title">VERITY - evidence over confidence</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#090d18"/>
+      <stop offset=".5" stop-color="#111827"/>
+      <stop offset="1" stop-color="#090d18"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#22c55e"/>
+      <stop offset=".5" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="180" rx="24" fill="url(#bg)"/>
+  <rect x="220" y="148" width="760" height="4" rx="2" fill="url(#accent)">
+    <animate attributeName="x" values="220;360;220" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="width" values="760;480;760" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  <text x="600" y="82" text-anchor="middle" fill="#f8fafc" font-family="Segoe UI,Arial,sans-serif" font-size="38" font-weight="800" letter-spacing="5">
+    EVIDENCE OVER CONFIDENCE
+  </text>
+  <text x="600" y="118" text-anchor="middle" fill="#94a3b8" font-family="Consolas,monospace" font-size="16">
+    VERIFY  ·  INTEGRATE  ·  COMPLETE
+  </text>
+</svg>

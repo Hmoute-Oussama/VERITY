@@ -12,15 +12,21 @@
 > No claim without evidence. No action without reality.
 
 [![Tests](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/tests.yml/badge.svg)](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/tests.yml)
+[![README pulse](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/update-readme.yml/badge.svg)](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/update-readme.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](pyproject.toml)
 [![MCP](https://img.shields.io/badge/MCP-ready-a855f7.svg)](src/verity/server/mcp.py)
+[![Release](https://img.shields.io/github/v/release/Hmoute-Oussama/VERITY?display_name=tag&color=38bdf8)](https://github.com/Hmoute-Oussama/VERITY/releases)
+[![Last commit](https://img.shields.io/github/last-commit/Hmoute-Oussama/VERITY?color=a855f7)](https://github.com/Hmoute-Oussama/VERITY/commits/main)
 [![GitHub Stars](https://img.shields.io/github/stars/Hmoute-Oussama/VERITY?style=flat&color=f59e0b)](https://github.com/Hmoute-Oussama/VERITY/stargazers)
 [![Issues](https://img.shields.io/github/issues/Hmoute-Oussama/VERITY?style=flat&color=ef4444)](https://github.com/Hmoute-Oussama/VERITY/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/Hmoute-Oussama/VERITY?style=flat&color=22c55e)](https://github.com/Hmoute-Oussama/VERITY/pulls)
 
 </div>
 
 ---
+
+<img src=".github/assets/verity-evidence-loop.svg" alt="VERITY evidence verification loop" width="100%">
 
 ## The problem
 
@@ -56,23 +62,36 @@ Verifiers        17
 **Branch:** `main` · **Latest:** `e5c9e1d · 2026-11-21` · **Pulse:** `2026-11-21 19:12 UTC`
 <!-- PROJECT-PULSE:END -->
 
-## How it works
+<div align="center">
 
-```mermaid
-flowchart LR
-    A[Agent statement / Git diff] --> B[Claim extraction]
-    B --> C[Independent verifiers]
-    C --> D[Evidence + dependency hashes]
-    D --> E[Claims: verified / stale / contradicted]
-    E --> F[Reality snapshot / MCP / dashboard]
-```
+### Live repository telemetry
 
-1. **Analyze** prose, transcripts, commands, or the Git diff.
-2. **Verify** through AST, filesystem, package, test, environment, HTTP, and
-   security checks.
-3. **Persist** evidence and the exact files it depends on in local SQLite.
-4. **Invalidate** evidence whose dependencies changed or exceeded their TTL.
-5. **Guard** shell actions before they execute.
+[![VERITY stats](https://github-readme-stats.vercel.app/api/pin/?username=Hmoute-Oussama&repo=VERITY&theme=tokyonight&hide_border=true)](https://github.com/Hmoute-Oussama/VERITY)
+
+[![VERITY streak](https://streak-stats.demolab.com?user=Hmoute-Oussama&theme=tokyonight&hide_border=true)](https://github.com/Hmoute-Oussama/VERITY)
+
+[![VERITY activity](https://github-readme-activity-graph.vercel.app/graph?username=Hmoute-Oussama&theme=tokyo-night&hide_border=true&area=true&custom_title=VERITY%20Development%20Activity)](https://github.com/Hmoute-Oussama/VERITY/graphs/commit-activity)
+
+</div>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/verity-flow.svg">
+  <img src=".github/assets/verity-flow.svg" alt="VERITY claim to reality pipeline" width="100%">
+</picture>
+
+<div align="center">
+
+### From a confident sentence to an evidence-backed verdict
+
+</div>
+
+| Stage | What happens | Why it matters |
+|---|---|---|
+| <b>1. CAPTURE</b> | Agent prose, transcripts, commands, and Git diffs become claims | Separates intent from fact |
+| <b>2. VERIFY</b> | AST, files, dependencies, tests, environment, HTTP, and security checks run | Uses independent project evidence |
+| <b>3. RECORD</b> | Evidence, digests, timestamps, confidence, and dependencies are stored | Creates an auditable history |
+| <b>4. INVALIDATE</b> | Changed or expired dependencies become stale | Prevents old proof being reused |
+| <b>5. GUARD</b> | Shell actions are checked before execution | Blocks concrete missing prerequisites |
 
 ## Why VERITY is different
 
@@ -347,3 +366,7 @@ Contributions are welcome:
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+<picture>
+  <img src=".github/assets/verity-footer.svg" alt="Evidence over confidence" width="100%">
+</picture>
