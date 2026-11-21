@@ -52,14 +52,15 @@ Result: completion is not justified.
 <!-- PROJECT-PULSE:START -->
 ## Project pulse
 
-```text
-Commits           1
-Python files     29
-Test modules      9
-Verifiers        17
-```
+<div align="center">
 
-**Branch:** `main` · **Latest:** `e5c9e1d · 2026-11-21` · **Pulse:** `2026-11-21 19:12 UTC`
+| COMMITS | PYTHON | TESTS | VERIFIERS |
+|:---:|:---:|:---:|:---:|
+| **3** | **29** | **9** | **17** |
+
+**Branch:** `main` · **Latest:** `bcafd4c · 2026-11-21` · **Pulse:** `2026-11-21 19:16 UTC`
+
+</div>
 <!-- PROJECT-PULSE:END -->
 
 <div align="center">
