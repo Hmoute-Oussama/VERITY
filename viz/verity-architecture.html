@@ -5,351 +5,451 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VERITY — Architecture</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-  body {
-    background: #0a0e1a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    overflow: hidden;
-  }
+:root {
+  --indigo:  #6366f1;
+  --violet:  #8b5cf6;
+  --blue:    #3b82f6;
+  --cyan:    #06b6d4;
+  --green:   #22c55e;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --orange:  #f97316;
+  --purple:  #a855f7;
+  --bg:      #040810;
+  --surface: rgba(255,255,255,0.03);
+  --border:  rgba(255,255,255,0.08);
+}
 
-  .scene {
-    width: 1200px;
-    height: 680px;
-    position: relative;
-    background: #0a0e1a;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
 
-  /* ── Grid background ── */
-  .grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(99,102,241,.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(99,102,241,.07) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
+body {
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
 
-  /* ── Title ── */
-  .title {
-    position: absolute;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    z-index: 10;
-  }
-  .title h1 {
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: 6px;
-    color: #fff;
-    text-transform: uppercase;
-  }
-  .title p {
-    font-size: 11px;
-    color: #6366f1;
-    letter-spacing: 3px;
-    margin-top: 2px;
-    text-transform: uppercase;
-  }
+/* ═══════════════════════════════════════════════
+   CANVAS
+═══════════════════════════════════════════════ */
+.canvas {
+  width: 1280px;
+  height: 720px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse 100% 80% at 50% 0%, #0c1535 0%, #040810 60%);
+}
 
-  /* ── Nodes ── */
-  .node {
-    position: absolute;
-    border-radius: 12px;
-    padding: 14px 18px;
-    text-align: center;
-    z-index: 5;
-    cursor: default;
-    transition: transform .2s;
-  }
-  .node:hover { transform: scale(1.05); }
+/* animated noise overlay */
+.canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 30;
+}
 
-  .node-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #fff;
-  }
-  .node-sub {
-    font-size: 9.5px;
-    color: rgba(255,255,255,.55);
-    margin-top: 3px;
-    letter-spacing: .5px;
-  }
-  .node-icon {
-    font-size: 22px;
-    margin-bottom: 4px;
-    display: block;
-  }
+/* ═══════════════════════════════════════════════
+   BACKGROUND GRID
+═══════════════════════════════════════════════ */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 40%, transparent 100%);
+}
 
-  /* Node themes */
-  .node-input {
-    background: linear-gradient(135deg,#1e1b4b,#312e81);
-    border: 1.5px solid #6366f1;
-    box-shadow: 0 0 24px rgba(99,102,241,.35), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-git {
-    background: linear-gradient(135deg,#1a1a2e,#2d2b55);
-    border: 1.5px solid #8b5cf6;
-    box-shadow: 0 0 20px rgba(139,92,246,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-extract {
-    background: linear-gradient(135deg,#0f172a,#1e3a5f);
-    border: 1.5px solid #3b82f6;
-    box-shadow: 0 0 24px rgba(59,130,246,.4), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-engine {
-    background: linear-gradient(135deg,#0d1f1f,#0f3d3d);
-    border: 2px solid #06b6d4;
-    box-shadow: 0 0 32px rgba(6,182,212,.5), inset 0 1px 0 rgba(255,255,255,.1);
-  }
-  .node-verifier {
-    background: linear-gradient(135deg,#0f1a0f,#1a3a1a);
-    border: 1.5px solid #22c55e;
-    box-shadow: 0 0 20px rgba(34,197,94,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-db {
-    background: linear-gradient(135deg,#1a0f0f,#3a1a1a);
-    border: 1.5px solid #f59e0b;
-    box-shadow: 0 0 20px rgba(245,158,11,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-guard {
-    background: linear-gradient(135deg,#1f0f0f,#3d1a1a);
-    border: 1.5px solid #ef4444;
-    box-shadow: 0 0 20px rgba(239,68,68,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-output {
-    background: linear-gradient(135deg,#1a1a1a,#2a2a2a);
-    border: 1.5px solid #a855f7;
-    box-shadow: 0 0 20px rgba(168,85,247,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .node-contracts {
-    background: linear-gradient(135deg,#1a0f0f,#2a1f10);
-    border: 1.5px solid #f97316;
-    box-shadow: 0 0 20px rgba(249,115,22,.3), inset 0 1px 0 rgba(255,255,255,.08);
-  }
+/* ═══════════════════════════════════════════════
+   AMBIENT LIGHT ORBS
+═══════════════════════════════════════════════ */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  animation: orb-float 8s ease-in-out infinite;
+}
+.orb-1 { width:500px; height:400px; background:rgba(99,102,241,.07);  top:-100px; left:-80px; animation-delay:0s; }
+.orb-2 { width:400px; height:300px; background:rgba(6,182,212,.06);   top:150px;  left:400px; animation-delay:2s; }
+.orb-3 { width:360px; height:360px; background:rgba(34,197,94,.05);   bottom:-80px; right:50px; animation-delay:4s; }
+.orb-4 { width:300px; height:200px; background:rgba(168,85,247,.05);  top:300px;  right:200px; animation-delay:6s; }
+@keyframes orb-float {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-20px) scale(1.04); }
+}
 
-  /* Pulse ring on engine node */
-  .pulse-ring {
-    position: absolute;
-    inset: -8px;
-    border-radius: 20px;
-    border: 1.5px solid #06b6d4;
-    opacity: 0;
-    animation: pulse-ring 2.4s ease-out infinite;
-  }
-  .pulse-ring:nth-child(2) { animation-delay: .8s; }
-  .pulse-ring:nth-child(3) { animation-delay: 1.6s; }
-  @keyframes pulse-ring {
-    0%   { opacity: .6; transform: scale(1); }
-    100% { opacity: 0;  transform: scale(1.18); }
-  }
+/* ═══════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════ */
+.header {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 20;
+  white-space: nowrap;
+}
+.header-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+.header-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 10px;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1;
+  /* gradient text */
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,.75) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-sub {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255,255,255,.35);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
 
-  /* ── SVG canvas for edges ── */
-  svg.edges {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-  }
+/* ═══════════════════════════════════════════════
+   STAGE TRACK (subtle horizontal dividers)
+═══════════════════════════════════════════════ */
+.stage-track {
+  position: absolute;
+  top: 86px;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.04) 20%, rgba(255,255,255,.04) 80%, transparent);
+  z-index: 1;
+}
+.stage-label {
+  position: absolute;
+  top: 76px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.14);
+  z-index: 2;
+}
 
-  /* Edge lines */
-  .edge-line {
-    fill: none;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-  }
-  .edge-indigo { stroke: rgba(99,102,241,.45); }
-  .edge-blue   { stroke: rgba(59,130,246,.45); }
-  .edge-cyan   { stroke: rgba(6,182,212,.5); }
-  .edge-green  { stroke: rgba(34,197,94,.4); }
-  .edge-amber  { stroke: rgba(245,158,11,.45); }
-  .edge-purple { stroke: rgba(168,85,247,.4); }
-  .edge-orange { stroke: rgba(249,115,22,.4); }
-  .edge-red    { stroke: rgba(239,68,68,.4); }
-  .edge-violet { stroke: rgba(139,92,246,.4); }
+/* ═══════════════════════════════════════════════
+   NODE BASE — glassmorphism
+═══════════════════════════════════════════════ */
+.node {
+  position: absolute;
+  border-radius: 14px;
+  padding: 16px 18px 14px;
+  text-align: center;
+  z-index: 10;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(10,14,30,0.65);
+  border: 1px solid var(--border);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+}
+.node:hover {
+  transform: translateY(-3px) scale(1.025);
+}
 
-  /* ── Particle dots ── */
-  .particle { pointer-events: none; }
+.node-icon {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 7px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.node-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.2;
+}
+.node-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,.38);
+  margin-top: 4px;
+  letter-spacing: .5px;
+}
+.node-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2.5px 8px;
+  border-radius: 20px;
+  margin-top: 7px;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+}
 
-  /* ── Status badges ── */
-  .badge {
-    display: inline-block;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 2px 6px;
-    border-radius: 20px;
-    margin-top: 5px;
-    text-transform: uppercase;
-  }
-  .badge-pass   { background: rgba(34,197,94,.2);  color: #22c55e; border: 1px solid rgba(34,197,94,.4); }
-  .badge-verify { background: rgba(6,182,212,.2);  color: #06b6d4; border: 1px solid rgba(6,182,212,.4); }
-  .badge-block  { background: rgba(239,68,68,.2);  color: #ef4444; border: 1px solid rgba(239,68,68,.4); }
-  .badge-store  { background: rgba(245,158,11,.2); color: #f59e0b; border: 1px solid rgba(245,158,11,.4); }
-  .badge-mcp    { background: rgba(168,85,247,.2); color: #a855f7; border: 1px solid rgba(168,85,247,.4); }
+/* ── Node color themes ── */
+.n-indigo  { border-color: rgba(99,102,241,.55);  box-shadow: 0 0 30px rgba(99,102,241,.18),  inset 0 1px 0 rgba(255,255,255,.07); }
+.n-violet  { border-color: rgba(139,92,246,.55);  box-shadow: 0 0 26px rgba(139,92,246,.18),  inset 0 1px 0 rgba(255,255,255,.07); }
+.n-blue    { border-color: rgba(59,130,246,.55);  box-shadow: 0 0 30px rgba(59,130,246,.2),   inset 0 1px 0 rgba(255,255,255,.07); }
+.n-cyan    { border-color: rgba(6,182,212,.7);    box-shadow: 0 0 40px rgba(6,182,212,.28),   inset 0 1px 0 rgba(255,255,255,.1);  }
+.n-green   { border-color: rgba(34,197,94,.55);   box-shadow: 0 0 26px rgba(34,197,94,.18),   inset 0 1px 0 rgba(255,255,255,.07); }
+.n-amber   { border-color: rgba(245,158,11,.55);  box-shadow: 0 0 26px rgba(245,158,11,.18),  inset 0 1px 0 rgba(255,255,255,.07); }
+.n-red     { border-color: rgba(239,68,68,.55);   box-shadow: 0 0 26px rgba(239,68,68,.18),   inset 0 1px 0 rgba(255,255,255,.07); }
+.n-orange  { border-color: rgba(249,115,22,.55);  box-shadow: 0 0 26px rgba(249,115,22,.18),  inset 0 1px 0 rgba(255,255,255,.07); }
+.n-purple  { border-color: rgba(168,85,247,.55);  box-shadow: 0 0 26px rgba(168,85,247,.18),  inset 0 1px 0 rgba(255,255,255,.07); }
 
-  /* ── Verifier mini-tags ── */
-  .vtags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .vtag {
-    font-size: 7.5px;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: rgba(34,197,94,.12);
-    color: rgba(34,197,94,.8);
-    border: 1px solid rgba(34,197,94,.2);
-    letter-spacing: .3px;
-  }
+/* Engine special */
+#n-engine {
+  background: rgba(6,20,28,0.8);
+  border: 1.5px solid rgba(6,182,212,.7);
+  box-shadow:
+    0 0 60px rgba(6,182,212,.22),
+    0 0 120px rgba(6,182,212,.08),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(6,182,212,.1);
+}
 
-  /* ── Legend ── */
-  .legend {
-    position: absolute;
-    bottom: 18px;
-    left: 24px;
-    display: flex;
-    gap: 18px;
-    z-index: 10;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 9px;
-    color: rgba(255,255,255,.5);
-    letter-spacing: .5px;
-    text-transform: uppercase;
-  }
-  .legend-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-  }
+/* Pulse rings */
+.pulse-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 22px;
+  border: 1px solid rgba(6,182,212,.5);
+  opacity: 0;
+  animation: pulse 2.8s cubic-bezier(.4,0,.6,1) infinite;
+  pointer-events: none;
+}
+.pulse-ring:nth-child(2) { animation-delay: .93s; }
+.pulse-ring:nth-child(3) { animation-delay: 1.86s; }
+@keyframes pulse {
+  0%   { opacity: .55; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.22); }
+}
 
-  /* ── Footer ── */
-  .footer {
-    position: absolute;
-    bottom: 18px;
-    right: 24px;
-    font-size: 10px;
-    color: rgba(255,255,255,.25);
-    letter-spacing: 1px;
-  }
+/* Verifier tags */
+.vtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 7px;
+}
+.vtag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(34,197,94,.08);
+  color: rgba(34,197,94,.75);
+  border: 1px solid rgba(34,197,94,.18);
+  letter-spacing: .3px;
+}
 
-  /* Stage labels */
-  .stage-label {
-    position: absolute;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.18);
-    z-index: 1;
-  }
+/* Badge color variants */
+.b-cyan   { background: rgba(6,182,212,.12);  color: #06b6d4; border: 1px solid rgba(6,182,212,.3); }
+.b-red    { background: rgba(239,68,68,.12);  color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+.b-amber  { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
+.b-purple { background: rgba(168,85,247,.12); color: #a855f7; border: 1px solid rgba(168,85,247,.3); }
+.b-green  { background: rgba(34,197,94,.12);  color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
 
-  /* ── Scanline overlay (cinematic) ── */
-  .scanlines {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,.03) 2px,
-      rgba(0,0,0,.03) 4px
-    );
-    pointer-events: none;
-    z-index: 20;
-  }
+/* ═══════════════════════════════════════════════
+   SVG EDGES
+═══════════════════════════════════════════════ */
+svg.edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+}
 
-  /* ── Glow blobs ── */
-  .glow {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .glow1 { width:320px; height:320px; background:rgba(99,102,241,.08);  top:-40px;  left:-40px; }
-  .glow2 { width:260px; height:260px; background:rgba(6,182,212,.08);   top:200px;  left:450px; }
-  .glow3 { width:280px; height:280px; background:rgba(34,197,94,.07);   bottom:-60px; right:100px; }
+/* ═══════════════════════════════════════════════
+   LEGEND
+═══════════════════════════════════════════════ */
+.legend {
+  position: absolute;
+  bottom: 22px;
+  left: 28px;
+  display: flex;
+  gap: 20px;
+  z-index: 20;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8.5px;
+  color: rgba(255,255,255,.32);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.legend-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+.footer {
+  position: absolute;
+  bottom: 22px;
+  right: 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,.18);
+  letter-spacing: 1.5px;
+  z-index: 20;
+}
+
+/* ═══════════════════════════════════════════════
+   SCAN LINES
+═══════════════════════════════════════════════ */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,.025) 3px,
+    rgba(0,0,0,.025) 4px
+  );
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* ═══════════════════════════════════════════════
+   VERTICAL SEPARATOR LINES
+═══════════════════════════════════════════════ */
+.sep {
+  position: absolute;
+  top: 86px;
+  bottom: 50px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.05) 30%, rgba(255,255,255,.05) 70%, transparent);
+  z-index: 1;
+}
 </style>
 </head>
 <body>
-<div class="scene">
-  <div class="glow glow1"></div>
-  <div class="glow glow2"></div>
-  <div class="glow glow3"></div>
+<div class="canvas" id="canvas">
+  <!-- Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <!-- Grid -->
   <div class="grid"></div>
+
+  <!-- Separators -->
+  <div class="sep" style="left:200px"></div>
+  <div class="sep" style="left:402px"></div>
+  <div class="sep" style="left:678px"></div>
+  <div class="sep" style="left:900px"></div>
+
+  <!-- Scanlines -->
   <div class="scanlines"></div>
 
-  <!-- Title -->
-  <div class="title">
-    <h1>VERITY</h1>
-    <p>Evidence pipeline · Reality layer for AI coding agents</p>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">Evidence-Driven · AI Reality Layer · v0.2.0</div>
+    <div class="header-title">VERITY</div>
+    <div class="header-sub">The Reality Layer for AI Coding Agents</div>
   </div>
 
-  <!-- Stage labels -->
-  <div class="stage-label" style="top:88px;left:38px;">① Capture</div>
-  <div class="stage-label" style="top:88px;left:290px;">② Extract</div>
-  <div class="stage-label" style="top:88px;left:530px;">③ Verify</div>
-  <div class="stage-label" style="top:88px;left:780px;">④ Record</div>
-  <div class="stage-label" style="top:88px;left:1010px;">⑤ Output</div>
+  <!-- Stage track & labels -->
+  <div class="stage-track"></div>
+  <div class="stage-label" style="left:38px">① Capture</div>
+  <div class="stage-label" style="left:230px">② Extract</div>
+  <div class="stage-label" style="left:452px">③ Engine</div>
+  <div class="stage-label" style="left:700px">④ Verify &amp; Store</div>
+  <div class="stage-label" style="left:938px">⑤ Output</div>
 
-  <!-- ── NODES ── -->
+  <!-- ══════════════════════
+       NODES
+  ══════════════════════ -->
 
-  <!-- Input: Agent Text -->
-  <div class="node node-input" id="n-agent" style="left:28px;top:110px;width:130px;">
-    <span class="node-icon">🤖</span>
-    <div class="node-label">Agent Text</div>
-    <div class="node-sub">Prose · Commands</div>
+  <!-- INPUTS -->
+  <div class="node n-indigo" id="n-agent" style="left:22px;top:106px;width:144px;">
+    <span class="node-icon" style="color:#6366f1">⬡</span>
+    <div class="node-title">Agent Text</div>
+    <div class="node-desc">prose · commands</div>
   </div>
 
-  <!-- Input: Git Diff -->
-  <div class="node node-git" id="n-git" style="left:28px;top:260px;width:130px;">
-    <span class="node-icon">⎇</span>
-    <div class="node-label">Git Diff</div>
-    <div class="node-sub">Changed files</div>
+  <div class="node n-violet" id="n-git" style="left:22px;top:268px;width:144px;">
+    <span class="node-icon" style="color:#8b5cf6">◈</span>
+    <div class="node-title">Git Diff</div>
+    <div class="node-desc">changed files · lines</div>
   </div>
 
-  <!-- Input: Contracts -->
-  <div class="node node-contracts" id="n-contracts" style="left:28px;top:410px;width:130px;">
-    <span class="node-icon">📋</span>
-    <div class="node-label">Contracts</div>
-    <div class="node-sub">.verity/contracts.yaml</div>
+  <div class="node n-orange" id="n-contracts" style="left:22px;top:432px;width:144px;">
+    <span class="node-icon" style="color:#f97316">◎</span>
+    <div class="node-title">Contracts</div>
+    <div class="node-desc">.verity/contracts.yaml</div>
   </div>
 
-  <!-- Extractor -->
-  <div class="node node-extract" id="n-extract" style="left:220px;top:195px;width:148px;">
-    <span class="node-icon">⚙️</span>
-    <div class="node-label">Claim Extractor</div>
-    <div class="node-sub">Regex rules · Dedup</div>
-    <span class="badge badge-verify">ClaimDraft ×N</span>
+  <!-- EXTRACTOR -->
+  <div class="node n-blue" id="n-extract" style="left:218px;top:208px;width:160px;">
+    <span class="node-icon" style="color:#3b82f6">⬡</span>
+    <div class="node-title">Claim Extractor</div>
+    <div class="node-desc">regex rules · dedup</div>
+    <div class="node-badge b-cyan">ClaimDraft[ ]</div>
   </div>
 
-  <!-- Engine (central) -->
-  <div class="node node-engine" id="n-engine" style="left:456px;top:245px;width:160px;">
+  <!-- ENGINE (central, largest) -->
+  <div class="node" id="n-engine" style="left:424px;top:238px;width:220px;">
     <div class="pulse-ring"></div>
     <div class="pulse-ring"></div>
     <div class="pulse-ring"></div>
-    <span class="node-icon">⚡</span>
-    <div class="node-label">Engine</div>
-    <div class="node-sub">Analyze · Verify · Invalidate</div>
-    <span class="badge badge-verify">Orchestrator</span>
+    <span class="node-icon" style="color:#06b6d4;font-size:26px;">⬡</span>
+    <div class="node-title" style="font-size:12px;letter-spacing:2.5px;">Engine</div>
+    <div class="node-desc" style="font-size:8.5px;">analyze · verify · invalidate · status</div>
+    <div class="node-badge b-cyan" style="font-size:8px;">Orchestrator</div>
   </div>
 
-  <!-- Verifier Registry -->
-  <div class="node node-verifier" id="n-verifiers" style="left:700px;top:130px;width:160px;">
-    <span class="node-icon">🔬</span>
-    <div class="node-label">Verifiers</div>
+  <!-- GUARD -->
+  <div class="node n-red" id="n-guard" style="left:434px;top:488px;width:200px;">
+    <span class="node-icon" style="color:#ef4444">◈</span>
+    <div class="node-title">Action Guard</div>
+    <div class="node-desc">prerequisite firewall</div>
+    <div class="node-badge b-red">Allow · Warn · Block</div>
+  </div>
+
+  <!-- VERIFIERS -->
+  <div class="node n-green" id="n-verifiers" style="left:694px;top:106px;width:184px;">
+    <span class="node-icon" style="color:#22c55e">◎</span>
+    <div class="node-title">21 Verifiers</div>
     <div class="vtags">
       <span class="vtag">code_symbol</span>
       <span class="vtag">file_exists</span>
@@ -358,285 +458,360 @@
       <span class="vtag">secret_scan</span>
       <span class="vtag">http_probe</span>
       <span class="vtag">openapi</span>
-      <span class="vtag">+14 more</span>
+      <span class="vtag">migration</span>
+      <span class="vtag">+13 more</span>
     </div>
   </div>
 
-  <!-- SQLite DB -->
-  <div class="node node-db" id="n-db" style="left:700px;top:390px;width:160px;">
-    <span class="node-icon">🗄️</span>
-    <div class="node-label">SQLite Store</div>
-    <div class="node-sub">Claims · Evidence · Deps</div>
-    <span class="badge badge-store">Digest hashes</span>
+  <!-- SQLITE DB -->
+  <div class="node n-amber" id="n-db" style="left:694px;top:384px;width:184px;">
+    <span class="node-icon" style="color:#f59e0b">⬡</span>
+    <div class="node-title">SQLite Store</div>
+    <div class="node-desc">claims · evidence · dep digests</div>
+    <div class="node-badge b-amber">SHA-256 hashes</div>
   </div>
 
-  <!-- Guard -->
-  <div class="node node-guard" id="n-guard" style="left:456px;top:470px;width:160px;">
-    <span class="node-icon">🛡️</span>
-    <div class="node-label">Action Guard</div>
-    <div class="node-sub">Prerequisite checks</div>
-    <span class="badge badge-block">Allow · Warn · Block</span>
+  <!-- OUTPUTS -->
+  <div class="node n-purple" id="n-cli" style="left:916px;top:106px;width:144px;">
+    <span class="node-icon" style="color:#a855f7">▸</span>
+    <div class="node-title">CLI</div>
+    <div class="node-desc">verity status · verify</div>
   </div>
 
-  <!-- Output: CLI -->
-  <div class="node node-output" id="n-cli" style="left:942px;top:110px;width:130px;">
-    <span class="node-icon">💻</span>
-    <div class="node-label">CLI</div>
-    <div class="node-sub">verity status</div>
+  <div class="node n-purple" id="n-mcp" style="left:916px;top:260px;width:144px;">
+    <span class="node-icon" style="color:#a855f7">◈</span>
+    <div class="node-title">MCP Server</div>
+    <div class="node-desc">7 tools · stdio</div>
+    <div class="node-badge b-purple">MCP</div>
   </div>
 
-  <!-- Output: MCP -->
-  <div class="node node-output" id="n-mcp" style="left:942px;top:255px;width:130px;">
-    <span class="node-icon">🔌</span>
-    <div class="node-label">MCP Server</div>
-    <div class="node-sub">7 tools · stdio</div>
-    <span class="badge badge-mcp">MCP</span>
+  <div class="node n-purple" id="n-http" style="left:916px;top:400px;width:144px;">
+    <span class="node-icon" style="color:#a855f7">◎</span>
+    <div class="node-title">HTTP Dashboard</div>
+    <div class="node-desc">local REST API</div>
   </div>
 
-  <!-- Output: HTTP -->
-  <div class="node node-output" id="n-http" style="left:942px;top:400px;width:130px;">
-    <span class="node-icon">🌐</span>
-    <div class="node-label">HTTP Dashboard</div>
-    <div class="node-sub">Local REST API</div>
+  <div class="node n-purple" id="n-snap" style="left:916px;top:530px;width:144px;">
+    <span class="node-icon" style="color:#a855f7">⬡</span>
+    <div class="node-title">Snapshot</div>
+    <div class="node-desc">snapshot.md</div>
   </div>
 
-  <!-- Output: Snapshot -->
-  <div class="node node-output" id="n-snap" style="left:942px;top:530px;width:130px;">
-    <span class="node-icon">📸</span>
-    <div class="node-label">Snapshot</div>
-    <div class="node-sub">snapshot.md</div>
-  </div>
-
-  <!-- SVG edges -->
-  <svg class="edges" id="svg-edges"></svg>
+  <!-- SVG layer for edges + particles -->
+  <svg class="edges" id="svg"></svg>
 
   <!-- Legend -->
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div>Input</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Extraction</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>Engine</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Verification</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Persistence</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Guard</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Output</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#6366f1"></div>Inputs</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#3b82f6"></div>Extraction</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#06b6d4"></div>Engine</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#22c55e"></div>Verification</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#f59e0b"></div>Persistence</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#ef4444"></div>Guard</div>
+    <div class="legend-item"><div class="legend-pip" style="background:#a855f7"></div>Output</div>
   </div>
 
-  <div class="footer">verity-evidence · github.com/Hmoute-Oussama/VERITY</div>
+  <div class="footer">verity-evidence · pip install verity-evidence</div>
 </div>
 
 <script>
-// ── Edge definitions ──────────────────────────────────────────────────────
-// Each edge: { from, to, color, dash, label }
-// We compute paths from node positions at runtime.
-
-function bbox(id) {
-  const el = document.getElementById(id);
-  const scene = document.querySelector('.scene');
-  const sr = scene.getBoundingClientRect();
-  const r  = el.getBoundingClientRect();
-  return {
-    x: r.left - sr.left, y: r.top - sr.top,
-    w: r.width, h: r.height,
-    cx: r.left - sr.left + r.width/2,
-    cy: r.top  - sr.top  + r.height/2,
-    right:  r.left - sr.left + r.width,
-    bottom: r.top  - sr.top  + r.height,
-  };
-}
-
+/* ══════════════════════════════════════════════════════
+   EDGE DEFINITIONS
+   side: 'R→L' | 'L→R' | 'T→B' | 'B→T' | 'custom'
+══════════════════════════════════════════════════════ */
 const EDGES = [
-  // Input → Extractor
-  { from:'n-agent',    to:'n-extract',   color:'#6366f1', side:'right-left',  label:'text' },
-  { from:'n-git',      to:'n-extract',   color:'#8b5cf6', side:'right-left',  label:'diff' },
-  { from:'n-contracts',to:'n-engine',    color:'#f97316', side:'right-left',  label:'contracts' },
+  // Inputs → Extractor
+  { id:'e1', from:'n-agent',    to:'n-extract',   color:'#6366f1', dir:'RL', label:'text' },
+  { id:'e2', from:'n-git',      to:'n-extract',   color:'#8b5cf6', dir:'RL', label:'diff' },
+  // Contracts → Engine (bypass extractor)
+  { id:'e3', from:'n-contracts',to:'n-engine',    color:'#f97316', dir:'RL', label:'required claims' },
   // Extractor → Engine
-  { from:'n-extract',  to:'n-engine',    color:'#3b82f6', side:'right-left',  label:'ClaimDraft[]' },
+  { id:'e4', from:'n-extract',  to:'n-engine',    color:'#3b82f6', dir:'RL', label:'ClaimDraft[ ]' },
   // Engine ↔ Verifiers
-  { from:'n-engine',   to:'n-verifiers', color:'#06b6d4', side:'top-bottom',  label:'verify()' },
-  { from:'n-verifiers',to:'n-engine',    color:'#22c55e', side:'bottom-top',  label:'EvidenceResult' },
+  { id:'e5', from:'n-engine',   to:'n-verifiers', color:'#06b6d4', dir:'TB', label:'verify()' },
+  { id:'e6', from:'n-verifiers',to:'n-engine',    color:'#22c55e', dir:'BT', label:'EvidenceResult' },
   // Engine ↔ DB
-  { from:'n-engine',   to:'n-db',        color:'#f59e0b', side:'bottom-top',  label:'persist' },
-  { from:'n-db',       to:'n-engine',    color:'#f59e0b', side:'top-bottom',  label:'read claims' },
+  { id:'e7', from:'n-engine',   to:'n-db',        color:'#f59e0b', dir:'BT', label:'persist' },
+  { id:'e8', from:'n-db',       to:'n-engine',    color:'#f59e0b', dir:'TB', label:'claims' },
   // Engine → Guard
-  { from:'n-engine',   to:'n-guard',     color:'#ef4444', side:'bottom-top',  label:'check_action()' },
-  // Engine → Outputs
-  { from:'n-db',       to:'n-cli',       color:'#a855f7', side:'right-left',  label:'' },
-  { from:'n-db',       to:'n-mcp',       color:'#a855f7', side:'right-left',  label:'' },
-  { from:'n-db',       to:'n-http',      color:'#a855f7', side:'right-left',  label:'' },
-  { from:'n-db',       to:'n-snap',      color:'#a855f7', side:'right-left',  label:'' },
+  { id:'e9', from:'n-engine',   to:'n-guard',     color:'#ef4444', dir:'BT', label:'check_action()' },
+  // DB → Outputs
+  { id:'ea', from:'n-db',       to:'n-cli',       color:'#a855f7', dir:'RL', label:'' },
+  { id:'eb', from:'n-db',       to:'n-mcp',       color:'#a855f7', dir:'RL', label:'' },
+  { id:'ec', from:'n-db',       to:'n-http',      color:'#a855f7', dir:'RL', label:'' },
+  { id:'ed', from:'n-db',       to:'n-snap',      color:'#a855f7', dir:'RL', label:'' },
 ];
 
-const NS = 'http://www.w3.org/2000/svg';
-const svg = document.getElementById('svg-edges');
+const NS  = 'http://www.w3.org/2000/svg';
+const SVG = document.getElementById('svg');
+const CAN = document.getElementById('canvas');
 
-// ── Draw edges & return midpoints for particle spawning ──────────────────
-const edgePaths = [];
+/* ── bbox helper ── */
+function box(id) {
+  const el = document.getElementById(id);
+  const cr = CAN.getBoundingClientRect();
+  const r  = el.getBoundingClientRect();
+  const x  = r.left - cr.left, y = r.top - cr.top;
+  return { x, y, w:r.width, h:r.height,
+           cx: x+r.width/2, cy: y+r.height/2,
+           r: x+r.width,    b: y+r.height };
+}
 
-function pt(x,y){ return `${x.toFixed(1)},${y.toFixed(1)}`; }
+/* ── SVG element helper ── */
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
 
-function edgePath(e) {
-  const f = bbox(e.from), t = bbox(e.to);
+/* ── Bezier path string ── */
+function bezier(x1,y1,cx1,cy1,cx2,cy2,x2,y2) {
+  return `M${x1.toFixed(1)},${y1.toFixed(1)} C${cx1.toFixed(1)},${cy1.toFixed(1)} ${cx2.toFixed(1)},${cy2.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+}
+
+/* ── Compute control points for each edge ── */
+function edgePoints(e) {
+  const f = box(e.from), t = box(e.to);
   let x1,y1,x2,y2,cx1,cy1,cx2,cy2;
-  const side = e.side || 'right-left';
-  if (side === 'right-left') {
-    x1=f.right; y1=f.cy; x2=t.x; y2=t.cy;
-    const dx = (x2-x1)*0.5;
+
+  if (e.dir === 'RL') {
+    // right of source → left of target
+    x1=f.r; y1=f.cy; x2=t.x; y2=t.cy;
+    const dx = Math.abs(x2-x1)*0.5;
     cx1=x1+dx; cy1=y1; cx2=x2-dx; cy2=y2;
-  } else if (side === 'top-bottom') {
-    x1=f.cx; y1=f.y; x2=t.cx; y2=t.bottom;
-    const dy=(y2-y1)*0.5;
+  } else if (e.dir === 'TB') {
+    x1=f.cx; y1=f.y; x2=t.cx; y2=t.b;
+    const dy = Math.abs(y2-y1)*0.4;
     cx1=x1; cy1=y1-dy; cx2=x2; cy2=y2+dy;
-  } else { // bottom-top
-    x1=f.cx; y1=f.bottom; x2=t.cx; y2=t.y;
-    const dy=(y2-y1)*0.5;
-    cx1=x1; cy1=y1+Math.abs(dy)*0.5; cx2=x2; cy2=y2-Math.abs(dy)*0.5;
+  } else if (e.dir === 'BT') {
+    x1=f.cx; y1=f.b; x2=t.cx; y2=t.y;
+    const dy = Math.abs(y2-y1)*0.4;
+    cx1=x1; cy1=y1+dy; cx2=x2; cy2=y2-dy;
   }
-  return { d:`M${pt(x1,y1)} C${pt(cx1,cy1)} ${pt(cx2,cy2)} ${pt(x2,y2)}`, x1,y1,x2,y2 };
+  return { x1,y1,cx1,cy1,cx2,cy2,x2,y2 };
 }
 
-function drawEdges() {
-  svg.innerHTML = '';
-  // defs: arrowheads + glow filter
-  const defs = document.createElementNS(NS,'defs');
-  const filter = document.createElementNS(NS,'filter');
-  filter.setAttribute('id','glow');
-  const fe = document.createElementNS(NS,'feGaussianBlur');
-  fe.setAttribute('stdDeviation','2.5'); fe.setAttribute('result','blur');
-  const fem = document.createElementNS(NS,'feMerge');
-  ['blur','SourceGraphic'].forEach(n=>{ const mn=document.createElementNS(NS,'feMergeNode'); mn.setAttribute('in',n); fem.appendChild(mn); });
-  filter.appendChild(fe); filter.appendChild(fem); defs.appendChild(filter);
+/* ══════════════════════════════════════════════════════
+   BUILD SVG DEFS + STATIC EDGES
+══════════════════════════════════════════════════════ */
+let edgeData = [];
 
-  EDGES.forEach((e,i)=>{
-    const col = e.color+'66'; // semi-transparent line
-    const id = `arrow${i}`;
-    const marker = document.createElementNS(NS,'marker');
-    marker.setAttribute('id',id); marker.setAttribute('markerWidth','7');
-    marker.setAttribute('markerHeight','7'); marker.setAttribute('refX','5');
-    marker.setAttribute('refY','2.5'); marker.setAttribute('orient','auto');
-    const poly = document.createElementNS(NS,'polygon');
-    poly.setAttribute('points','0,0 5,2.5 0,5');
-    poly.setAttribute('fill',e.color+'cc');
-    marker.appendChild(poly); defs.appendChild(marker);
+function buildGraph() {
+  SVG.innerHTML = '';
+  edgeData = [];
+
+  /* ── Defs ── */
+  const defs = el('defs', {});
+
+  // Glow filter
+  const filt = el('filter', { id:'glow', x:'-50%', y:'-50%', width:'200%', height:'200%' });
+  const blur = el('feGaussianBlur', { stdDeviation:'3', result:'blur' });
+  const merge = el('feMerge', {});
+  const mn1 = el('feMergeNode', { in:'blur' });
+  const mn2 = el('feMergeNode', { in:'SourceGraphic' });
+  merge.appendChild(mn1); merge.appendChild(mn2);
+  filt.appendChild(blur); filt.appendChild(merge);
+  defs.appendChild(filt);
+
+  // Strong glow filter for particles
+  const filt2 = el('filter', { id:'pglow', x:'-100%', y:'-100%', width:'300%', height:'300%' });
+  const blur2 = el('feGaussianBlur', { stdDeviation:'4', result:'b2' });
+  const merge2 = el('feMerge', {});
+  const m2a = el('feMergeNode', { in:'b2' });
+  const m2b = el('feMergeNode', { in:'SourceGraphic' });
+  merge2.appendChild(m2a); merge2.appendChild(m2b);
+  filt2.appendChild(blur2); filt2.appendChild(merge2);
+  defs.appendChild(filt2);
+
+  // Arrowhead markers
+  EDGES.forEach((e, i) => {
+    const mk = el('marker', {
+      id: `arr${i}`, markerWidth:'8', markerHeight:'8',
+      refX:'6', refY:'3', orient:'auto'
+    });
+    const tri = el('polygon', {
+      points: '0,0 6,3 0,6',
+      fill: e.color + 'dd'
+    });
+    mk.appendChild(tri);
+    defs.appendChild(mk);
   });
-  svg.appendChild(defs);
 
-  EDGES.forEach((e,i)=>{
-    const info = edgePath(e);
-    const path = document.createElementNS(NS,'path');
-    path.setAttribute('d', info.d);
-    path.setAttribute('fill','none');
-    path.setAttribute('stroke', e.color+'55');
-    path.setAttribute('stroke-width','1.5');
-    path.setAttribute('stroke-linecap','round');
-    path.setAttribute('marker-end',`url(#arrow${i})`);
-    if(e.dash) path.setAttribute('stroke-dasharray','5,4');
-    svg.appendChild(path);
-    edgePaths.push({ ...info, color: e.color, edgeIdx: i });
+  // Gradient defs for edge lines
+  EDGES.forEach((e, i) => {
+    const p = edgePoints(e);
+    const grad = el('linearGradient', {
+      id: `grad${i}`,
+      x1: p.x1, y1: p.y1,
+      x2: p.x2, y2: p.y2,
+      gradientUnits: 'userSpaceOnUse'
+    });
+    const s1 = el('stop', { offset:'0%',   'stop-color': e.color, 'stop-opacity':'0.1' });
+    const s2 = el('stop', { offset:'50%',  'stop-color': e.color, 'stop-opacity':'0.5' });
+    const s3 = el('stop', { offset:'100%', 'stop-color': e.color, 'stop-opacity':'0.15' });
+    grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3);
+    defs.appendChild(grad);
+  });
+
+  SVG.appendChild(defs);
+
+  /* ── Static edge paths ── */
+  EDGES.forEach((e, i) => {
+    const p = edgePoints(e);
+    const d = bezier(p.x1,p.y1,p.cx1,p.cy1,p.cx2,p.cy2,p.x2,p.y2);
+
+    // Outer glow path (thick, blurred)
+    const glow = el('path', {
+      d, fill:'none',
+      stroke: e.color,
+      'stroke-width': '3',
+      'stroke-linecap': 'round',
+      opacity: '0.08',
+      filter: 'url(#glow)',
+    });
+    SVG.appendChild(glow);
+
+    // Main path
+    const path = el('path', {
+      d, fill:'none',
+      stroke: `url(#grad${i})`,
+      'stroke-width': '1.5',
+      'stroke-linecap': 'round',
+      'marker-end': `url(#arr${i})`,
+    });
+    SVG.appendChild(path);
+
+    // Label (only if present)
+    if (e.label) {
+      const mid = bezierPoint(p, 0.5);
+      const lbl = el('text', {
+        x: mid.x, y: mid.y - 7,
+        'font-family': "'JetBrains Mono', monospace",
+        'font-size': '7.5',
+        fill: e.color,
+        opacity: '0.55',
+        'text-anchor': 'middle',
+        'letter-spacing': '0.5',
+      });
+      lbl.textContent = e.label;
+      SVG.appendChild(lbl);
+    }
+
+    edgeData.push({ ...p, color: e.color, edgeIdx: i });
   });
 }
 
-// ── Particle system ───────────────────────────────────────────────────────
-const particles = [];
-const PARTICLE_POOL = 60;
-
-function lerp(a,b,t){ return a+(b-a)*t; }
-
-function cubicBezier(p0,p1,p2,p3,t){
-  const mt=1-t;
-  return mt*mt*mt*p0 + 3*mt*mt*t*p1 + 3*mt*t*t*p2 + t*t*t*p3;
-}
-
-function spawnParticle(ep) {
-  const circle = document.createElementNS(NS,'circle');
-  circle.setAttribute('r','3');
-  circle.setAttribute('fill', ep.color);
-  circle.setAttribute('filter','url(#glow)');
-  circle.setAttribute('opacity','0');
-  svg.appendChild(circle);
-
-  const f = bbox(EDGES[ep.edgeIdx].from);
-  const t2= bbox(EDGES[ep.edgeIdx].to);
-  const side = EDGES[ep.edgeIdx].side || 'right-left';
-  let x1,y1,x2,y2,cx1,cy1,cx2,cy2;
-  if (side === 'right-left') {
-    x1=f.right; y1=f.cy; x2=t2.x; y2=t2.cy;
-    const dx=(x2-x1)*0.5; cx1=x1+dx; cy1=y1; cx2=x2-dx; cy2=y2;
-  } else if (side === 'top-bottom') {
-    x1=f.cx; y1=f.y; x2=t2.cx; y2=t2.bottom;
-    const dy=(y2-y1)*0.5; cx1=x1; cy1=y1-dy; cx2=x2; cy2=y2+dy;
-  } else {
-    x1=f.cx; y1=f.bottom; x2=t2.cx; y2=t2.y;
-    const dy=(y2-y1)*0.5; cx1=x1; cy1=y1+Math.abs(dy)*0.5; cx2=x2; cy2=y2-Math.abs(dy)*0.5;
-  }
-
+/* ── Point on cubic bezier at t ── */
+function bezierPoint(p, t) {
+  const mt = 1-t;
   return {
-    el: circle,
-    x1,y1,cx1,cy1,cx2,cy2,x2,y2,
-    t: 0,
-    speed: 0.004 + Math.random()*0.004,
-    color: ep.color,
-    alive: true,
+    x: mt*mt*mt*p.x1 + 3*mt*mt*t*p.cx1 + 3*mt*t*t*p.cx2 + t*t*t*p.x2,
+    y: mt*mt*mt*p.y1 + 3*mt*mt*t*p.cy1 + 3*mt*t*t*p.cy2 + t*t*t*p.y2,
   };
 }
 
-function spawnRandom() {
-  if (edgePaths.length === 0) return;
-  const ep = edgePaths[Math.floor(Math.random()*edgePaths.length)];
-  particles.push(spawnParticle(ep));
+/* ══════════════════════════════════════════════════════
+   PARTICLE SYSTEM
+══════════════════════════════════════════════════════ */
+const particles = [];
+const MAX_PARTICLES = 70;
+
+function spawnParticle() {
+  if (!edgeData.length || particles.length >= MAX_PARTICLES) return;
+  const ep = edgeData[Math.floor(Math.random() * edgeData.length)];
+
+  // Main glowing dot
+  const dot = el('circle', {
+    r: '0', fill: ep.color,
+    filter: 'url(#pglow)',
+    opacity: '0',
+  });
+  // Inner bright core
+  const core = el('circle', {
+    r: '0', fill: '#fff',
+    opacity: '0',
+  });
+
+  SVG.appendChild(dot);
+  SVG.appendChild(core);
+
+  particles.push({
+    dot, core,
+    p: ep,
+    t: 0,
+    speed: 0.0025 + Math.random() * 0.003,
+    maxR: 2.8 + Math.random() * 1.4,
+  });
 }
 
-// ── Animation loop ────────────────────────────────────────────────────────
-let last = 0;
-let spawnTimer = 0;
+/* ══════════════════════════════════════════════════════
+   ANIMATION LOOP
+══════════════════════════════════════════════════════ */
+let lastTime = 0;
+let spawnAccum = 0;
+const SPAWN_INTERVAL = 180; // ms between spawns
 
 function tick(now) {
-  const dt = now - last; last = now;
-  spawnTimer += dt;
-  if (spawnTimer > 220 && particles.length < PARTICLE_POOL) {
-    spawnRandom();
-    spawnTimer = 0;
+  const dt = Math.min(now - lastTime, 50);
+  lastTime = now;
+  spawnAccum += dt;
+
+  if (spawnAccum >= SPAWN_INTERVAL) {
+    spawnParticle();
+    spawnAccum = 0;
   }
 
-  for (let i = particles.length-1; i >= 0; i--) {
+  for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.t += p.speed;
-    if (p.t >= 1) {
-      p.el.remove();
-      particles.splice(i,1);
+
+    if (p.t >= 1.0) {
+      p.dot.remove(); p.core.remove();
+      particles.splice(i, 1);
       continue;
     }
-    const t = p.t;
-    const mt = 1-t;
-    const px = mt*mt*mt*p.x1 + 3*mt*mt*t*p.cx1 + 3*mt*t*t*p.cx2 + t*t*t*p.x2;
-    const py = mt*mt*mt*p.y1 + 3*mt*mt*t*p.cy1 + 3*mt*t*t*p.cy2 + t*t*t*p.y2;
-    p.el.setAttribute('cx', px.toFixed(1));
-    p.el.setAttribute('cy', py.toFixed(1));
-    // fade in/out
-    let opacity = 1;
-    if (t < 0.1)  opacity = t/0.1;
-    if (t > 0.85) opacity = (1-t)/0.15;
-    p.el.setAttribute('opacity', opacity.toFixed(2));
-    // size pulse
-    const r = 2.5 + Math.sin(t*Math.PI)*1.5;
-    p.el.setAttribute('r', r.toFixed(2));
+
+    const pt = bezierPoint(p.p, p.t);
+    const t  = p.t;
+
+    // Fade envelope
+    let alpha = 1;
+    if (t < 0.08) alpha = t / 0.08;
+    else if (t > 0.88) alpha = (1 - t) / 0.12;
+
+    // Size envelope: grows and shrinks
+    const r = p.maxR * Math.sin(t * Math.PI);
+
+    p.dot.setAttribute('cx',  pt.x.toFixed(2));
+    p.dot.setAttribute('cy',  pt.y.toFixed(2));
+    p.dot.setAttribute('r',   r.toFixed(2));
+    p.dot.setAttribute('opacity', (alpha * 0.9).toFixed(3));
+
+    p.core.setAttribute('cx', pt.x.toFixed(2));
+    p.core.setAttribute('cy', pt.y.toFixed(2));
+    p.core.setAttribute('r',  (r * 0.35).toFixed(2));
+    p.core.setAttribute('opacity', (alpha * 0.7).toFixed(3));
   }
 
   requestAnimationFrame(tick);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════ */
 window.addEventListener('load', () => {
-  drawEdges();
-  // Pre-seed a few particles staggered
-  setTimeout(()=>{ spawnRandom(); spawnRandom(); }, 300);
-  setTimeout(()=>{ spawnRandom(); spawnRandom(); spawnRandom(); }, 700);
+  buildGraph();
+  // stagger-seed
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => spawnParticle(), i * 120);
+  }
   requestAnimationFrame(tick);
 });
 
 window.addEventListener('resize', () => {
-  particles.forEach(p => p.el.remove());
+  particles.forEach(p => { p.dot.remove(); p.core.remove(); });
   particles.length = 0;
-  drawEdges();
+  buildGraph();
 });
 </script>
 </body>
