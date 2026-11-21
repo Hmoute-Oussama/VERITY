@@ -4,6 +4,7 @@
 - [Login feature tutorial](tutorial-login-feature.md)
 - [Evidence contracts](contracts.md)
 - [Verifiers](verifiers.md)
+- [Verifier trust model](verifier-security.md)
 - [MCP integrations](integrations.md)
 - [CI integrations](ci-integrations.md)
 - [Troubleshooting](troubleshooting.md)

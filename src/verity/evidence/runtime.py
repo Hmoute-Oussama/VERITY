@@ -310,6 +310,64 @@ class CommandVerifier:
         )
 
 
+class MigrationConsistencyVerifier:
+    name = "migration_consistency"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        table = str(claim.args.get("table") or "").strip()
+        if not table:
+            return fail("No table was specified for migration consistency")
+        definition_files = [
+            path for path in walk_files(ctx.root, exts={".sql", ".prisma"}, limit=3000)
+            if re.search(rf"(?i)\b{re.escape(table)}\b", read_text(path))
+        ]
+        migration_files = [
+            path for path in walk_files(ctx.root, exts=CODE_EXTS | {".sql"}, limit=3000)
+            if re.search(r"(?i)(alembic|django\.db|migration|migrations|create_table|create table)", read_text(path))
+            and re.search(rf"(?i)\b{re.escape(table)}\b", read_text(path))
+        ]
+        definition_rel = [relpath(path, ctx.root) for path in definition_files]
+        migration_rel = [relpath(path, ctx.root) for path in migration_files]
+        deps = sorted(set(definition_rel + migration_rel))
+
+        if definition_rel and migration_rel:
+            return ok(
+                f"Table `{table}` has both schema definition and migration evidence",
+                details="Definition: " + ", ".join(definition_rel) + "\nMigration: " + ", ".join(migration_rel),
+                payload={"table": table, "definitions": definition_rel, "migrations": migration_rel},
+                deps=deps,
+                confidence=0.8,
+            )
+        if migration_rel:
+            return warn(
+                f"Table `{table}` appears in migrations but no matching schema definition was found",
+                payload={"table": table, "migrations": migration_rel},
+                deps=migration_rel,
+                confidence=0.55,
+            )
+        if definition_rel:
+            return warn(
+                f"Table `{table}` is defined in schema code but no matching migration was found",
+                payload={"table": table, "definitions": definition_rel},
+                deps=definition_rel,
+                confidence=0.55,
+            )
+        return fail(
+            f"Neither schema nor migration evidence was found for table `{table}`",
+            payload={
+                "table": table,
+                "files_searched": len(
+                    walk_files(
+                        ctx.root,
+                        exts=CODE_EXTS | {".sql", ".prisma"},
+                        limit=3000,
+                    )
+                ),
+            },
+            confidence=0.85,
+        )
+
+
 class ManualVerifier:
     name = "manual"
 

@@ -228,3 +228,63 @@ def test_command_dangerous_is_refused(engine):
     result = run(engine, "command", command="rm -rf /")
     assert result.status.value == "fail"
     assert "dangerous" in result.summary.lower()
+
+
+def test_openapi_route_and_method(engine):
+    (engine.root / "openapi.yaml").write_text(
+        "openapi: 3.0.0\npaths:\n  /login:\n    post:\n      responses:\n        '200':\n          description: OK\n"
+    )
+    assert run(engine, "openapi", path="openapi.yaml", route="/login", method="POST").status.value == "pass"
+    result = run(engine, "openapi", path="openapi.yaml", route="/login", method="DELETE")
+    assert result.status.value == "fail"
+    assert "method" in result.summary.lower()
+
+
+def test_migration_consistency_requires_both_schema_and_migration(engine):
+    (engine.root / "schema.sql").write_text("CREATE TABLE users (id INTEGER PRIMARY KEY);\n")
+    (engine.root / "001_create_users.sql").write_text("CREATE TABLE users (id INTEGER PRIMARY KEY);\n")
+    result = run(engine, "migration_consistency", table="users")
+    assert result.status.value == "pass"
+    assert len(result.dependencies) >= 2
+
+
+def test_migration_consistency_reports_missing_table(engine):
+    result = run(engine, "migration_consistency", table="payments")
+    assert result.status.value == "fail"
+
+
+def test_lockfile_consistency_checks_manifest_names(engine):
+    (engine.root / "package.json").write_text(
+        '{"dependencies":{"react":"19.0.0","typescript":"5.0.0"}}'
+    )
+    (engine.root / "package-lock.json").write_text(
+        '{"packages":{"node_modules/react":{},"node_modules/typescript":{}}}'
+    )
+    assert run(engine, "lockfile_consistency", manifest="package.json").status.value == "pass"
+
+
+def test_lockfile_consistency_detects_missing_dependency(engine):
+    (engine.root / "package.json").write_text(
+        '{"dependencies":{"react":"19.0.0","missing-package":"1.0.0"}}'
+    )
+    (engine.root / "package-lock.json").write_text(
+        '{"packages":{"node_modules/react":{}}}'
+    )
+    result = run(engine, "lockfile_consistency", manifest="package.json")
+    assert result.status.value == "fail"
+    assert "missing-package" in result.details
+
+
+def test_sbom_cyclonedx_package(engine):
+    (engine.root / "sbom.json").write_text(
+        '{"bomFormat":"CycloneDX","components":[{"name":"fastapi","version":"0.115.0"}]}'
+    )
+    assert run(engine, "sbom", path="sbom.json", package="fastapi").status.value == "pass"
+    assert run(engine, "sbom", path="sbom.json", package="payment-sdk").status.value == "fail"
+
+
+def test_sbom_spdx_package(engine):
+    (engine.root / "sbom.spdx.json").write_text(
+        '{"spdxVersion":"SPDX-2.3","packages":[{"name":"react","SPDXID":"SPDXRef-Package-react"}]}'
+    )
+    assert run(engine, "sbom", path="sbom.spdx.json", package="react").status.value == "pass"

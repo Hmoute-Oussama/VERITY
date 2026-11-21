@@ -41,6 +41,7 @@ from .config import (
 )
 from .contracts import check_contracts, contract_summary, load_contracts, scaffold_contracts
 from .engine import Engine, ProjectStatus
+from .evidence.registry import verifier_catalog
 from .gitutils import install_pre_commit_hook, is_git_repo
 from .graph import build_graph, to_dot, to_text
 from .guard import check_action, execute_guarded, scan_assumptions
@@ -1323,6 +1324,30 @@ def _hook_guard(
             )
         )
     raise typer.Exit(0)
+
+
+@app.command("verifiers")
+def verifiers(
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable verifier catalog."),
+) -> None:
+    """List verifier IDs and their public evidence contracts."""
+    catalog = verifier_catalog()
+    if json_out:
+        console.print_json(json.dumps(catalog, indent=2))
+        return
+    table = Table(box=None, pad_edge=False, header_style="bold bright_black")
+    table.add_column("Verifier", style="cyan")
+    table.add_column("Kind")
+    table.add_column("Proof")
+    table.add_column("Arguments")
+    for name, spec in catalog.items():
+        table.add_row(
+            name,
+            str(spec["kind"]),
+            str(spec["proof"]),
+            ", ".join(str(arg) for arg in spec["args"]),
+        )
+    console.print(table)
 
 
 @app.command()

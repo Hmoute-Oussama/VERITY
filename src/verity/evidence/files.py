@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import Claim, EvidenceResult
-from ..util import glob_paths, load_toml, read_text, relpath
+from ..util import glob_paths, load_json, load_toml, load_yaml, read_text, relpath
 from .base import VerifyContext, fail, ok, warn
 
 
@@ -139,6 +139,70 @@ def _parse_config(path: Path) -> Any:
                 raise ValueError(f"line {i}: expected KEY=VALUE")
         return True
     raise ValueError(f"unsupported configuration format: {suffix or path.name}")
+
+
+class OpenApiVerifier:
+    name = "openapi"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        path = str(claim.args.get("path") or "openapi.yaml")
+        route = str(claim.args.get("route") or claim.args.get("path_name") or "").strip()
+        method = str(claim.args.get("method") or "").strip().upper()
+        spec_path = ctx.root / path
+        if not spec_path.is_file():
+            return fail(f"OpenAPI specification `{path}` does not exist", payload={"path": path})
+        try:
+            data = load_yaml(spec_path) if spec_path.suffix.lower() in {".yaml", ".yml"} else load_json(spec_path)
+        except Exception as exc:
+            return fail(
+                f"OpenAPI specification `{path}` is invalid",
+                details=f"{type(exc).__name__}: {exc}",
+                payload={"path": path},
+                deps=[path],
+            )
+        if not isinstance(data, dict):
+            return fail("OpenAPI specification must be a mapping", payload={"path": path}, deps=[path])
+        paths = data.get("paths")
+        if not isinstance(paths, dict):
+            return fail("OpenAPI specification has no paths mapping", payload={"path": path}, deps=[path])
+        if not route:
+            return ok(
+                f"OpenAPI specification is valid and declares {len(paths)} path(s)",
+                details="No route was requested; the specification structure was validated.",
+                payload={"path": path, "routes": sorted(paths)},
+                deps=[path],
+                confidence=0.8,
+            )
+        route_spec = paths.get(route)
+        if route_spec is None:
+            aliases = {str(p).replace("//", "/"): p for p in paths}
+            route_spec = aliases.get(route.replace("//", "/"))
+        if route_spec is None:
+            return fail(
+                f"OpenAPI route `{route}` was not found",
+                payload={"path": path, "route": route, "available": sorted(paths)},
+                deps=[path],
+                confidence=0.95,
+            )
+        if method and isinstance(route_spec, dict):
+            available = {str(m).upper() for m in route_spec.keys() if str(m).lower() in {
+                "get", "put", "post", "delete", "options", "head", "patch", "trace"
+            }}
+            if method not in available:
+                return fail(
+                    f"OpenAPI route `{route}` exists but method `{method}` is missing",
+                    details=f"Available methods: {', '.join(sorted(available)) or 'none'}",
+                    payload={"path": path, "route": route, "method": method, "available": sorted(available)},
+                    deps=[path],
+                    confidence=0.95,
+                )
+        return ok(
+            f"OpenAPI route `{route}`{f' with {method}' if method else ''} is declared",
+            details=f"Specification: {path}",
+            payload={"path": path, "route": route, "method": method or None},
+            deps=[path],
+            confidence=1.0,
+        )
 
 
 class JsonPathVerifier:

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/verifiers.schema.json",
+  "title": "VERITY verifier catalog v1",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "required": ["kind", "args", "proof", "dependencies"],
+    "properties": {
+      "kind": {"type": "string"},
+      "args": {"type": "array", "items": {"type": "string"}},
+      "proof": {"type": "string"},
+      "dependencies": {"type": "string"}
+    }
+  }
+}

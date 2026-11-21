@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import json
 from pathlib import Path
 
 from ..models import Claim, EvidenceResult
@@ -266,4 +267,68 @@ class SecurityAnalysisVerifier:
             payload=payload,
             deps=deps,
             confidence=0.3,
+        )
+
+
+class SbomVerifier:
+    name = "sbom"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        path = str(claim.args.get("path") or "sbom.json")
+        package = str(claim.args.get("package") or claim.args.get("name") or "").strip().lower()
+        sbom_path = ctx.root / path
+        if not sbom_path.is_file():
+            return fail(f"SBOM `{path}` does not exist", payload={"path": path})
+        try:
+            data = json.loads(read_text(sbom_path))
+        except json.JSONDecodeError as exc:
+            return fail(
+                f"SBOM `{path}` is not valid JSON",
+                details=f"line {exc.lineno}: {exc.msg}",
+                payload={"path": path},
+                deps=[path],
+            )
+        if not isinstance(data, dict):
+            return fail("SBOM must contain a JSON object", payload={"path": path}, deps=[path])
+
+        names: list[str] = []
+        format_name = str(data.get("bomFormat") or ("SPDX-" + str(data.get("spdxVersion") or "") if data.get("spdxVersion") else "") or "unknown")
+        if data.get("bomFormat") == "CycloneDX":
+            for component in data.get("components") or []:
+                if isinstance(component, dict):
+                    names.append(str(component.get("name") or component.get("purl") or "").lower())
+        elif isinstance(data.get("packages"), list):
+            for item in data["packages"]:
+                if isinstance(item, dict):
+                    names.append(str(item.get("name") or item.get("SPDXID") or "").lower())
+
+        names = sorted(set(name for name in names if name))
+        if not names:
+            return warn(
+                f"SBOM `{path}` was parsed but no package components were found",
+                details="Supported formats: CycloneDX components; SPDX packages.",
+                payload={"path": path, "format": format_name},
+                deps=[path],
+                confidence=0.4,
+            )
+        if package:
+            matches = [name for name in names if package in name or name in package]
+            if not matches:
+                return fail(
+                    f"Package `{package}` was not found in SBOM `{path}`",
+                    payload={"path": path, "package": package, "format": format_name},
+                    deps=[path],
+                    confidence=0.9,
+                )
+            return ok(
+                f"Package `{package}` is represented in SBOM `{path}`",
+                payload={"path": path, "package": package, "matches": matches, "format": format_name},
+                deps=[path],
+                confidence=1.0,
+            )
+        return ok(
+            f"SBOM `{path}` contains {len(names)} package component(s)",
+            payload={"path": path, "format": format_name, "packages": names[:200]},
+            deps=[path],
+            confidence=0.9,
         )

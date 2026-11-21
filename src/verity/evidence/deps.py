@@ -266,3 +266,65 @@ def _local_module_exists(root: Path, module: str) -> bool:
             root / "src" / top / "__init__.py",
         )
     )
+
+
+class LockfileConsistencyVerifier:
+    name = "lockfile_consistency"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        manifest = str(claim.args.get("manifest") or "package.json")
+        lockfile = str(claim.args.get("lockfile") or "")
+        manifest_path = ctx.root / manifest
+        if not manifest_path.is_file():
+            return fail(f"Dependency manifest `{manifest}` does not exist", payload={"manifest": manifest})
+
+        lock_candidates = (
+            [lockfile] if lockfile else
+            ["package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", "yarn.lock", "poetry.lock", "Cargo.lock"]
+        )
+        found = [name for name in lock_candidates if (ctx.root / name).is_file()]
+        if not found:
+            return fail(
+                "No supported dependency lockfile was found",
+                details="Checked: " + ", ".join(lock_candidates),
+                payload={"manifest": manifest, "checked": lock_candidates},
+                deps=[manifest],
+            )
+
+        try:
+            if manifest_path.suffix.lower() == ".json":
+                manifest_data = load_json(manifest_path) or {}
+                direct = set()
+                if isinstance(manifest_data, dict):
+                    for section in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+                        direct.update(str(name) for name in (manifest_data.get(section) or {}))
+                lock_text = read_text(ctx.root / found[0])
+                missing = sorted(name for name in direct if name not in lock_text)
+            else:
+                direct = set()
+                missing = []
+                lock_text = read_text(ctx.root / found[0])
+        except Exception as exc:
+            return fail(
+                f"Dependency lockfile verification failed: {type(exc).__name__}",
+                details=str(exc),
+                payload={"manifest": manifest, "lockfile": found[0]},
+                deps=[manifest, found[0]],
+            )
+
+        deps = [manifest, found[0]]
+        if missing:
+            return fail(
+                f"Lockfile `{found[0]}` may be missing {len(missing)} manifest dependency/dependencies",
+                details=", ".join(missing[:20]),
+                payload={"manifest": manifest, "lockfile": found[0], "missing": missing[:100]},
+                deps=deps,
+                confidence=0.75,
+            )
+        return ok(
+            f"Lockfile `{found[0]}` is present and covers the manifest",
+            details=f"Checked {len(direct)} direct dependency name(s).",
+            payload={"manifest": manifest, "lockfile": found[0], "direct_dependencies": sorted(direct)},
+            deps=deps,
+            confidence=0.85,
+        )

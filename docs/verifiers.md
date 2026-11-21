@@ -6,6 +6,10 @@ VERITY verifiers convert claims into evidence. Agent prose is not evidence.
 |---|---|
 | `code_symbol` | Python source symbol lookup |
 | `code_route` | HTTP route declarations |
+| `openapi` | OpenAPI route and optional method declarations |
+| `migration_consistency` | Matching schema and migration evidence |
+| `lockfile_consistency` | Manifest and lockfile consistency |
+| `sbom` | CycloneDX or SPDX package representation |
 | `syntax` | Source/config parsing |
 | `imports` | Local and installed import resolution |
 | `file_exists` | Working-tree paths |
@@ -21,6 +25,21 @@ VERITY verifiers convert claims into evidence. Agent prose is not evidence.
 | `command` | Allowlisted command execution |
 | `manual` | Explicit human attestation |
 | `none` | Assumption without proof |
+
+## Verifier contract
+
+Every verifier receives a claim and a `VerifyContext`, and returns:
+
+- `status`: `pass`, `warn`, `fail`, `error`, or `stale`
+- `summary`: a concise human-readable result
+- `details`: optional exact evidence
+- `payload`: structured machine-readable evidence
+- `dependencies`: source files used by the result
+- `confidence`: a number from `0.0` to `1.0`
+
+Verifier arguments and IDs are public compatibility surfaces. New argument fields
+are optional and backward-compatible; existing meanings must not change without
+a major release.
 
 Evidence statuses are `pass`, `warn`, `fail`, `error`, or `stale`.
 

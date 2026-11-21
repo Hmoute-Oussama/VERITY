@@ -10,6 +10,17 @@ from verity.cli import app
 runner = CliRunner()
 
 
+def test_verifier_catalog_is_machine_readable():
+    result = runner.invoke(app, ["verifiers", "--json"])
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert "openapi" in output
+    assert "migration_consistency" in output
+    assert "lockfile_consistency" in output
+    assert "sbom" in output
+
+
 def test_version_json_exposes_stable_api_versions():
     result = runner.invoke(app, ["--version", "--json"])
 

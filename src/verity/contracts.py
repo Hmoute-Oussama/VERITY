@@ -14,6 +14,10 @@ from .util import load_yaml
 VERIFIER_KINDS = {
     "code_symbol": ClaimKind.EXISTENCE.value,
     "code_route": ClaimKind.EXISTENCE.value,
+    "openapi": ClaimKind.CONFIG.value,
+    "migration_consistency": ClaimKind.SCHEMA.value,
+    "lockfile_consistency": ClaimKind.DEPENDENCY.value,
+    "sbom": ClaimKind.SECURITY.value,
     "file_exists": ClaimKind.EXISTENCE.value,
     "syntax": ClaimKind.CONFIG.value,
     "imports": ClaimKind.DEPENDENCY.value,
