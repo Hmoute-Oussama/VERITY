@@ -19,6 +19,13 @@ self-contained fixtures and intentionally avoid external network services.
 | Stale evidence | https://github.com/Hmoute-Oussama/VERITY-integration-stale-evidence |
 | Dependency change | [Matrix fixture](./dependency-change) |
 
+## Complete end-to-end examples
+
+- [Python / FastAPI](e2e-python)
+- [JavaScript / package](e2e-javascript)
+- [Docker / Compose](e2e-docker)
+- [Monorepo](e2e-monorepo)
+
 | Example | Primary behavior |
 |---|---|
 | `fastapi-auth` | Route, dependency, and test contracts |

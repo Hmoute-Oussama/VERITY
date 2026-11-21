@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/evidence-bundle.schema.json",
+  "title": "VERITY evidence bundle v1",
+  "type": "object",
+  "required": ["schema", "project", "commit", "branch", "overall", "claims", "evidence", "dependencies", "integrity"],
+  "properties": {
+    "schema": {"type": "string", "const": "verity.evidence-bundle.v1"},
+    "project": {"type": "string"},
+    "commit": {"type": ["string", "null"]},
+    "branch": {"type": ["string", "null"]},
+    "overall": {"type": "string"},
+    "claims": {"type": "array"},
+    "evidence": {"type": "array"},
+    "dependencies": {"type": "array"},
+    "integrity": {"type": "object", "required": ["algorithm", "digest"], "properties": {"algorithm": {"const": "sha256"}, "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "signature": {"type": "object", "required": ["algorithm", "value"], "properties": {"algorithm": {"const": "ed25519"}, "value": {"type": "string"}}}
+  },
+  "additionalProperties": false
+}

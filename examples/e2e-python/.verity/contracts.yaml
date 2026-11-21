@@ -1,0 +1,13 @@
+version: 1
+task: e2e_python
+contracts:
+  - id: app_symbol
+    claim: The FastAPI application symbol exists.
+    verifier: code_symbol
+    args: {symbol: app}
+    required: true
+  - id: login_route
+    claim: POST /login exists.
+    verifier: code_route
+    args: {path: /login, method: POST}
+    required: true

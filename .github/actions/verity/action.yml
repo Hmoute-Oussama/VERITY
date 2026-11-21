@@ -1,5 +1,8 @@
 name: "VERITY evidence check"
 description: "Initialize VERITY and check evidence contracts in a GitHub repository"
+branding:
+  icon: "shield"
+  color: "green"
 inputs:
   root:
     description: "Repository root"

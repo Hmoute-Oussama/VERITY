@@ -1,0 +1,1 @@
+{"name":"e2e-javascript","scripts":{"build":"tsc","test":"node --test"},"dependencies":{"typescript":"5.7.0"}}

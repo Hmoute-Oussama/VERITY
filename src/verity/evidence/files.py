@@ -148,7 +148,14 @@ class OpenApiVerifier:
         path = str(claim.args.get("path") or "openapi.yaml")
         route = str(claim.args.get("route") or claim.args.get("path_name") or "").strip()
         method = str(claim.args.get("method") or "").strip().upper()
-        spec_path = ctx.root / path
+        spec_path = (ctx.root / path).resolve()
+        try:
+            spec_path.relative_to(ctx.root.resolve())
+        except ValueError:
+            return fail(
+                "OpenAPI specification path escapes the project root",
+                payload={"path": path},
+            )
         if not spec_path.is_file():
             return fail(f"OpenAPI specification `{path}` does not exist", payload={"path": path})
         try:

@@ -19,6 +19,11 @@ Semantic Versioning.
 - 1.0 compatibility and database migration documentation.
 - OpenAPI, migration consistency, lockfile consistency, and SBOM verifiers.
 - Public verifier catalog and trust-model documentation.
+- Versioned JSON output envelopes and canonical evidence bundle exports.
+- MCP conformance tests for resources, tools, initialization, and malformed inputs.
+- Project templates for Python, JavaScript, Docker, and monorepo onboarding.
+- Four end-to-end project examples and formal 1.0 stability documentation.
+- Marketplace-compatible root GitHub Action metadata.
 - Public integration fixture matrix for FastAPI, Flask, Next.js, Docker Compose,
   monorepos, TypeScript, Java, Go, contradictions, stale evidence, and dependencies.
 

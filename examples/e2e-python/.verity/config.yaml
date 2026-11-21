@@ -1,0 +1,4 @@
+version: 1
+project: e2e-python
+verification:
+  allow_exec: false

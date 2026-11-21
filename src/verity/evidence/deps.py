@@ -274,7 +274,11 @@ class LockfileConsistencyVerifier:
     def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
         manifest = str(claim.args.get("manifest") or "package.json")
         lockfile = str(claim.args.get("lockfile") or "")
-        manifest_path = ctx.root / manifest
+        manifest_path = (ctx.root / manifest).resolve()
+        try:
+            manifest_path.relative_to(ctx.root.resolve())
+        except ValueError:
+            return fail("Dependency manifest path escapes the project root", payload={"manifest": manifest})
         if not manifest_path.is_file():
             return fail(f"Dependency manifest `{manifest}` does not exist", payload={"manifest": manifest})
 
@@ -282,7 +286,16 @@ class LockfileConsistencyVerifier:
             [lockfile] if lockfile else
             ["package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", "yarn.lock", "poetry.lock", "Cargo.lock"]
         )
-        found = [name for name in lock_candidates if (ctx.root / name).is_file()]
+        found: list[str] = []
+        root = ctx.root.resolve()
+        for name in lock_candidates:
+            candidate = (ctx.root / name).resolve()
+            try:
+                candidate.relative_to(root)
+            except ValueError:
+                continue
+            if candidate.is_file():
+                found.append(name)
         if not found:
             return fail(
                 "No supported dependency lockfile was found",

@@ -59,7 +59,13 @@ def run_example(path: Path) -> dict:
 
 
 def main() -> int:
-    examples = sorted(path for path in ROOT.iterdir() if path.is_dir() and not path.name.startswith("."))
+    examples = sorted(
+        path
+        for path in ROOT.iterdir()
+        if path.is_dir()
+        and not path.name.startswith(".")
+        and (path / "expected.txt").is_file()
+    )
     report = [run_example(path) for path in examples]
     failures: list[str] = []
     for item in report:

@@ -84,3 +84,60 @@ def test_unknown_tool_returns_an_error(project):
 
     assert is_error is True
     assert "Unknown tool" in text
+
+
+def test_mcp_ping_and_resource_catalog(project):
+    server = McpServer(project)
+    try:
+        ping = server.handle({"jsonrpc": "2.0", "id": 2, "method": "ping"})
+        tools = server.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/list"})
+        resources = server.handle({"jsonrpc": "2.0", "id": 4, "method": "resources/list"})
+    finally:
+        server.engine.repo.close()
+
+    assert ping["result"] == {}
+    assert {tool["name"] for tool in tools["result"]["tools"]} == {
+        "verity_reality",
+        "verity_check_action",
+        "verity_verify_claim",
+        "verity_list_claims",
+        "verity_verify",
+        "verity_scan",
+        "verity_contract_check",
+    }
+    assert {resource["uri"] for resource in resources["result"]["resources"]} == {
+        "verity://reality",
+        "verity://claims",
+        "verity://graph",
+    }
+
+
+def test_mcp_rejects_non_object_tool_arguments(project):
+    server = McpServer(project)
+    try:
+        response = server.handle({
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {"name": "verity_check_action", "arguments": "not-an-object"},
+        })
+    finally:
+        server.engine.repo.close()
+
+    assert response["error"]["code"] == -32602
+    assert "arguments must be an object" in response["error"]["message"]
+
+
+def test_mcp_unknown_resource_returns_protocol_error(project):
+    server = McpServer(project)
+    try:
+        response = server.handle({
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "resources/read",
+            "params": {"uri": "verity://unknown"},
+        })
+    finally:
+        server.engine.repo.close()
+
+    assert response["error"]["code"] == -32602

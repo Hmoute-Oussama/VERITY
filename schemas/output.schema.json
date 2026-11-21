@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/output.schema.json",
+  "title": "VERITY versioned command output v1",
+  "type": "object",
+  "required": ["schema", "api_version", "verity_version", "generated_at", "command", "data"],
+  "properties": {
+    "schema": {"type": "string", "const": "verity.output.v1"},
+    "api_version": {"type": "string"},
+    "verity_version": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "command": {"type": "string"},
+    "data": {}
+  },
+  "additionalProperties": false
+}

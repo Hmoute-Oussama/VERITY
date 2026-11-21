@@ -1,0 +1,13 @@
+version: 1
+task: e2e_monorepo
+contracts:
+  - id: python_package
+    claim: Python package source exists.
+    verifier: file_exists
+    args: {paths: ["packages/python/app.py"]}
+    required: true
+  - id: node_package
+    claim: Node package source exists.
+    verifier: file_exists
+    args: {paths: ["packages/javascript/index.ts"]}
+    required: true

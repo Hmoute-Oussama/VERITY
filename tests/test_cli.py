@@ -151,3 +151,36 @@ def test_hook_guard_ignores_uninitialized_project(tmp_path: Path):
 
     assert result.exit_code == 0
     assert result.stdout.strip() == ""
+
+
+def test_status_json_is_versioned(tmp_path: Path):
+    result = runner.invoke(app, ["-C", str(tmp_path), "init", "--no-gitignore"])
+    assert result.exit_code == 0
+    result = runner.invoke(app, ["-C", str(tmp_path), "status", "--json"])
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output["schema"] == "verity.output.v1"
+    assert output["command"] == "status"
+    assert "api_version" in output
+
+
+def test_init_supports_project_templates(tmp_path: Path):
+    result = runner.invoke(
+        app,
+        ["-C", str(tmp_path), "init", "--template", "docker", "--no-gitignore"],
+    )
+    assert result.exit_code == 0
+    text = (tmp_path / ".verity" / "contracts.yaml").read_text(encoding="utf-8")
+    assert "compose_config" in text
+
+
+def test_export_evidence_bundle(project: Path):
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "export", "--out", str(project / "bundle.json")],
+    )
+    assert result.exit_code == 0
+    data = json.loads((project / "bundle.json").read_text(encoding="utf-8"))
+    assert data["schema"] == "verity.evidence-bundle.v1"
+    assert data["integrity"]["algorithm"] == "sha256"
+    assert len(data["integrity"]["digest"]) == 64

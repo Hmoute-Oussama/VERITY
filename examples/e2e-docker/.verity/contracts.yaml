@@ -1,0 +1,8 @@
+version: 1
+task: e2e_docker
+contracts:
+  - id: compose
+    claim: Docker Compose configuration is valid.
+    verifier: config_valid
+    args: {paths: [compose.yaml]}
+    required: true

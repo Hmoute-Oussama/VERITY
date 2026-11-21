@@ -56,6 +56,8 @@ from .models import ClaimDraft, ClaimStatus, EvidenceStatus, Risk, Verdict
 from .snapshot import build_agent_context, build_snapshot
 from .util import dump_yaml, relpath
 from .validation import validate_config, validate_contracts
+from .output import json_envelope, dumps_versioned
+from .evidence_bundle import write_evidence_bundle
 
 app = typer.Typer(
     add_completion=False,
@@ -277,12 +279,20 @@ def init(
     ctx: typer.Context,
     force: bool = typer.Option(False, "--force", help="Overwrite existing configuration."),
     no_gitignore: bool = typer.Option(False, "--no-gitignore", help="Do not touch .gitignore."),
+    template: str = typer.Option(
+        "general",
+        "--template",
+        "-t",
+        help="Project template: general | python | javascript | docker | monorepo.",
+    ),
 ) -> None:
     """Initialize VERITY in this project."""
     root = _root(ctx)
     root.mkdir(parents=True, exist_ok=True)
     vdir = verity_dir(root)
     vdir.mkdir(parents=True, exist_ok=True)
+    contracts = contracts_path(root)
+    contracts_existed = contracts.exists()
 
     cfg_path = vdir / "config.yaml"
     if force or not cfg_path.exists():
@@ -292,10 +302,22 @@ def init(
         cfg = Config.load(root)
         console.print(f"[bright_black]exists [/bright_black] {relpath(cfg_path, root)}")
 
-    contracts = contracts_path(root)
     if force or not contracts.exists():
         scaffold_contracts(root, force=True)
         console.print(f"[green]created[/green] {relpath(contracts, root)}")
+    template_contracts = {
+        "python": "version: 1\ntask: python_project\ncontracts:\n  - id: tests_pass\n    claim: The test suite passes.\n    verifier: test_execution\n    required: true\n",
+        "javascript": "version: 1\ntask: javascript_project\ncontracts:\n  - id: package_manifest\n    claim: package.json exists.\n    verifier: file_exists\n    args:\n      paths: [package.json]\n    required: true\n",
+        "docker": "version: 1\ntask: docker_project\ncontracts:\n  - id: compose_config\n    claim: Compose configuration exists.\n    verifier: config_valid\n    required: true\n",
+        "monorepo": "version: 1\ntask: monorepo_project\ncontracts:\n  - id: manifests\n    claim: Package manifests exist.\n    verifier: file_exists\n    args:\n      paths: [package.json, pyproject.toml]\n    required: true\n",
+    }
+    if template != "general" and (force or not contracts_existed):
+        if template not in template_contracts:
+            err_console.print(
+                "[red]Unknown template.[/red] Use general, python, javascript, docker, or monorepo."
+            )
+            raise typer.Exit(2)
+        contracts.write_text(template_contracts[template], encoding="utf-8")
 
     engine = Engine(root, config=cfg)
     console.print(f"[green]created[/green] {relpath(engine.repo.path, root)}")
@@ -337,7 +359,7 @@ def status(
     engine = _engine(ctx)
     result = engine.status()
     if json_out:
-        console.print_json(json.dumps(_status_dict(result), indent=2))
+        console.print_json(dumps_versioned("status", _status_dict(result)))
     elif not quiet:
         _render_status(result)
     raise typer.Exit(0 if result.overall in {"verified", "no-claims"} else 1)
@@ -371,7 +393,8 @@ def analyze(
     )
     if json_out:
         console.print_json(
-            json.dumps(
+            dumps_versioned(
+                "analyze",
                 {
                     "claims": [
                         {"id": c.id, "text": c.text, "status": c.status, "verifier": c.verifier}
@@ -384,7 +407,6 @@ def analyze(
                     ],
                     "notes": result.notes,
                 },
-                indent=2,
             )
         )
         return
@@ -805,6 +827,27 @@ def invalidate(
 # ---------------------------------------------------------------------------
 
 
+@app.command("export")
+def export_evidence(
+    ctx: typer.Context,
+    out: Path = typer.Option("verity-evidence-bundle.json", "--out", "-o"),
+    private_key: Path | None = typer.Option(None, "--private-key"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Export a canonical evidence bundle, optionally signed with Ed25519."""
+    engine = _engine(ctx)
+    try:
+        target = write_evidence_bundle(engine, out, private_key=private_key)
+    except RuntimeError as exc:
+        err_console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(2)
+    engine.repo.close()
+    if json_out:
+        console.print_json(dumps_versioned("export", {"path": str(target), "signed": private_key is not None}))
+    else:
+        console.print(f"[green]wrote[/green] {escape(str(target))}")
+
+
 @app.command()
 def snapshot(
     ctx: typer.Context,
@@ -816,7 +859,7 @@ def snapshot(
     """Generate the reality snapshot: verified facts, assumptions, stale evidence."""
     engine = _engine(ctx)
     if json_out:
-        console.print_json(json.dumps(build_agent_context(engine), indent=2))
+        console.print_json(dumps_versioned("snapshot", build_agent_context(engine)))
         return
     status = engine.status()
     text = build_snapshot(status, compact=compact)
@@ -843,7 +886,7 @@ def graph(
     g = build_graph(engine, include_history=history)
     fmt = format.lower()
     if fmt == "json":
-        payload = json.dumps(g.to_dict(), indent=2)
+        payload = dumps_versioned("graph", g.to_dict())
     elif fmt == "dot":
         payload = to_dot(g)
     elif fmt == "text":

@@ -36,6 +36,7 @@ dev = [
   "twine>=5",
   "pre-commit>=3",
 ]
+signing = ["cryptography>=42"]
 
 [project.urls]
 Homepage = "https://github.com/Hmoute-Oussama/VERITY"

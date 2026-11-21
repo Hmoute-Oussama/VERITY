@@ -276,7 +276,11 @@ class SbomVerifier:
     def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
         path = str(claim.args.get("path") or "sbom.json")
         package = str(claim.args.get("package") or claim.args.get("name") or "").strip().lower()
-        sbom_path = ctx.root / path
+        sbom_path = (ctx.root / path).resolve()
+        try:
+            sbom_path.relative_to(ctx.root.resolve())
+        except ValueError:
+            return fail("SBOM path escapes the project root", payload={"path": path})
         if not sbom_path.is_file():
             return fail(f"SBOM `{path}` does not exist", payload={"path": path})
         try:

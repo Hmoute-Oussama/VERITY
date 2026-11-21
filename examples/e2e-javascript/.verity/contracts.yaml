@@ -1,0 +1,13 @@
+version: 1
+task: e2e_javascript
+contracts:
+  - id: package
+    claim: package.json exists.
+    verifier: file_exists
+    args: {paths: [package.json]}
+    required: true
+  - id: lockfile
+    claim: The package manifest has a matching lockfile.
+    verifier: lockfile_consistency
+    args: {manifest: package.json, lockfile: package-lock.json}
+    required: true

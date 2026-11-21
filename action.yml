@@ -1,0 +1,35 @@
+name: "VERITY Evidence Check"
+description: "Verify evidence contracts and block unsupported completion claims in pull requests"
+author: "VERITY"
+branding:
+  icon: "shield"
+  color: "green"
+inputs:
+  root:
+    description: "Repository root"
+    required: false
+    default: "."
+  fail-on:
+    description: "Exit policy: contradicted, stale, incomplete, or never"
+    required: false
+    default: "contradicted"
+  snapshot:
+    description: "Write a compact snapshot artifact"
+    required: false
+    default: "true"
+runs:
+  using: "composite"
+  steps:
+    - name: Install VERITY
+      shell: bash
+      run: python -m pip install verity-evidence
+    - name: Initialize evidence contracts
+      shell: bash
+      run: verity --root "${{ inputs.root }}" init --no-gitignore
+    - name: Check evidence contracts
+      shell: bash
+      run: verity --root "${{ inputs.root }}" contract check --json
+    - name: Write snapshot
+      if: ${{ inputs.snapshot == 'true' }}
+      shell: bash
+      run: verity --root "${{ inputs.root }}" snapshot --write --compact
