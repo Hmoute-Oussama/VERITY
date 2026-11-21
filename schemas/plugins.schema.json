@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/plugins.schema.json",
+  "title": "VERITY plugin manifest v1",
+  "type": "object",
+  "properties": {
+    "plugins": {
+      "type": ["array", "object"],
+      "items": {
+        "type": "object",
+        "required": ["id", "verifier"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "package": {"type": "string"},
+          "verifier": {"type": "string", "minLength": 1},
+          "verified": {"type": "boolean", "default": false},
+          "minimum_api": {"type": "string", "pattern": "^1\\\\.0"},
+          "trust_level": {"enum": ["community", "verified", "maintainer"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["plugins"],
+  "additionalProperties": false
+}

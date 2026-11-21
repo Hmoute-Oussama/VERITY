@@ -16,6 +16,9 @@
         "http_allow_hosts": {"type": "array", "items": {"type": "string"}},
         "max_output_chars": {"type": "integer", "minimum": 1},
         "security_scan": {"type": "boolean"}
+        ,"sandboxed_execution": {"type": "boolean"}
+        ,"reproducibility_environment": {"type": "boolean"}
+        ,"sandbox_mode": {"type": "string", "enum": ["safe-env", "container", "none"]}
       },
       "additionalProperties": true
     },

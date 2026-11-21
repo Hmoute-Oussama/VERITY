@@ -9,6 +9,8 @@
 - [1.0 compatibility matrix](compatibility-matrix.md)
 - [GitHub Action](github-action.md)
 - [Project onboarding](onboarding.md)
+- [Community readiness](community-readiness.md)
+- [MCP interoperability](mcp-interop.md)
 - [MCP integrations](integrations.md)
 - [CI integrations](ci-integrations.md)
 - [Troubleshooting](troubleshooting.md)

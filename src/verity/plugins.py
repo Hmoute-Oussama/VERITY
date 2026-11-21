@@ -22,6 +22,8 @@ class PluginDescriptor:
     package: str
     verifier: str
     verified: bool = False
+    minimum_api: str = "1.0"
+    trust_level: str = "community"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -31,6 +33,8 @@ class PluginDescriptor:
             "package": self.package,
             "verifier": self.verifier,
             "verified": self.verified,
+            "minimum_api": self.minimum_api,
+            "trust_level": self.trust_level,
         }
 
 
@@ -65,6 +69,8 @@ def discover_plugins(root: Path) -> list[PluginDescriptor]:
                 package=str(item.get("package") or ""),
                 verifier=verifier,
                 verified=bool(item.get("verified", False)),
+                minimum_api=str(item.get("minimum_api") or "1.0"),
+                trust_level=str(item.get("trust_level") or ("verified" if item.get("verified") else "community")),
             )
         )
     return out

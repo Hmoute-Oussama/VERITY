@@ -224,3 +224,33 @@ def test_export_supports_junit(project: Path):
     )
     assert result.exit_code == 0
     assert "<testsuite" in path.read_text(encoding="utf-8")
+
+
+def test_backup_restore_and_diagnostics(project: Path):
+    backup = project / "backup.db"
+    result = runner.invoke(app, ["-C", str(project), "backup", "--out", str(backup)])
+    assert result.exit_code == 0
+    assert backup.is_file()
+
+    restored = project / "restored"
+    restored.mkdir()
+    (restored / ".verity").mkdir()
+    result = runner.invoke(
+        app,
+        ["-C", str(restored), "restore", str(backup)],
+    )
+    assert result.exit_code == 0
+
+    result = runner.invoke(app, ["-C", str(project), "diagnostics", "--json"])
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["initialized"] is True
+    assert data["database"]["integrity"] == "ok"
+
+
+def test_audit_export(project: Path):
+    out = project / "audit.json"
+    result = runner.invoke(app, ["-C", str(project), "audit", "--out", str(out)])
+    assert result.exit_code == 0
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["schema"] == "verity.audit.v1"

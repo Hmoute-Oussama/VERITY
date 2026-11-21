@@ -31,6 +31,7 @@ def test_ed25519_bundle_signature_verifies(engine):
     ).decode("utf-8")
 
     bundle = sign_bundle(export_evidence_bundle(engine), private_pem)
+    assert len(bundle["signature"]["key_id"]) == 32
     assert verify_bundle(bundle, public_pem) is True
     bundle["claims"].append({"tampered": True})
     assert verify_bundle(bundle, public_pem) is False

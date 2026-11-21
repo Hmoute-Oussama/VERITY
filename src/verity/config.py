@@ -52,6 +52,7 @@ class VerificationConfig:
     security_scan: bool = True
     sandboxed_execution: bool = True
     reproducibility_environment: bool = True
+    sandbox_mode: str = "safe-env"
 
 
 @dataclass
@@ -149,6 +150,7 @@ class Config:
                 "security_scan": self.verification.security_scan,
                 "sandboxed_execution": self.verification.sandboxed_execution,
                 "reproducibility_environment": self.verification.reproducibility_environment,
+                "sandbox_mode": self.verification.sandbox_mode,
             },
             "evidence": {
                 "ttl_seconds": self.evidence.ttl_seconds,

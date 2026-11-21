@@ -106,7 +106,16 @@ def sign_bundle(bundle: dict[str, Any], private_key_pem: str) -> dict[str, Any]:
     unsigned = dict(bundle)
     unsigned.pop("signature", None)
     signature = key.sign(canonical_json(unsigned)).hex()
-    bundle["signature"] = {"algorithm": "ed25519", "value": signature}
+    public_pem = key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    key_id = hashlib.sha256(public_pem).hexdigest()[:32]
+    bundle["signature"] = {
+        "algorithm": "ed25519",
+        "key_id": key_id,
+        "value": signature,
+    }
     return bundle
 
 
@@ -131,6 +140,13 @@ def verify_bundle(bundle: dict[str, Any], public_key_pem: str) -> bool:
     public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
     if not isinstance(public_key, Ed25519PublicKey):
         raise RuntimeError("Evidence bundle verification requires an Ed25519 public key")
+    public_pem = public_key.public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    key_id = hashlib.sha256(public_pem).hexdigest()[:32]
+    if signature.get("key_id") and signature.get("key_id") != key_id:
+        return False
     unsigned = dict(bundle)
     unsigned.pop("signature", None)
     try:

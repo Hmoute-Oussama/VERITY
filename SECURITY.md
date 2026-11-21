@@ -2,8 +2,16 @@
 
 ## Supported versions
 
-VERITY is currently maintained on the `main` branch. Security fixes are released
-on a best-effort basis until a formal support policy is published.
+VERITY 1.0.x receives security fixes until the next major release. Security
+fixes are released as patch releases; unsupported beta releases do not receive
+new fixes.
+
+## Response targets
+
+- Initial acknowledgment: within 3 working days.
+- Triage and severity assessment: within 7 working days.
+- Coordinated fix for critical or exploitable vulnerabilities: target 30 days.
+- Public advisory after a fix or mitigation is available.
 
 ## Reporting a vulnerability
 

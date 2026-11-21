@@ -6,6 +6,8 @@ import json
 import os
 import shlex
 import sys
+import shutil
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +37,7 @@ from .config import (
     CONTRACTS_FILE,
     Config,
     contracts_path,
+    db_path,
     find_project_root,
     scaffold_config,
     snapshot_path,
@@ -917,6 +920,123 @@ def verify_evidence_bundle(
     else:
         console.print("[red]Evidence bundle signature is invalid or missing.[/red]")
     raise typer.Exit(0 if valid else 1)
+
+
+@app.command("backup")
+def backup_evidence(
+    ctx: typer.Context,
+    out: Path = typer.Option("verity-verity.db.backup", "--out", "-o"),
+) -> None:
+    """Create a backup copy of the local SQLite evidence database."""
+    root = _root(ctx)
+    source = db_path(root)
+    if not source.is_file():
+        if not verity_dir(root).is_dir():
+            err_console.print("[red]Evidence database not found. Run `verity init` first.[/red]")
+            raise typer.Exit(2)
+        engine = Engine(root)
+        engine.repo.close()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, out)
+    console.print(f"[green]wrote[/green] {escape(str(out))}")
+
+
+@app.command("restore")
+def restore_evidence(
+    ctx: typer.Context,
+    backup: Path,
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    """Restore a local evidence database backup."""
+    root = _root(ctx)
+    target = db_path(root)
+    if not backup.is_file():
+        err_console.print("[red]Backup file not found.[/red]")
+        raise typer.Exit(2)
+    if target.exists() and not force:
+        err_console.print(
+            "[red]Evidence database already exists.[/red] Use --force after reviewing the backup."
+        )
+        raise typer.Exit(2)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(backup, target)
+    conn = sqlite3.connect(str(target))
+    try:
+        result = conn.execute("PRAGMA integrity_check").fetchone()
+    finally:
+        conn.close()
+    if not result or result[0] != "ok":
+        err_console.print("[red]Restored database failed SQLite integrity check.[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]restored[/green] {escape(str(target))}")
+
+
+@app.command("audit")
+def audit_log(
+    ctx: typer.Context,
+    out: Path | None = typer.Option(None, "--out", "-o"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Export repository evidence events for team or incident review."""
+    root = _root(ctx)
+    engine = _engine(ctx)
+    events = engine.repo.events(limit=1000)
+    engine.repo.close()
+    payload = {
+        "schema": "verity.audit.v1",
+        "project_root": str(root),
+        "events": events,
+    }
+    text = json.dumps(payload, sort_keys=True, indent=2)
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text + "\n", encoding="utf-8")
+        console.print(f"[green]wrote[/green] {escape(str(out))}")
+    elif json_out:
+        console.print_json(text)
+    else:
+        console.print_json(text)
+
+
+@app.command("diagnostics")
+def diagnostics(
+    ctx: typer.Context,
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Export non-secret installation and database diagnostics."""
+    root = _root(ctx)
+    payload: dict[str, Any] = {
+        "version": __version__,
+        "api_version": API_VERSION,
+        "project_root": str(root),
+        "initialized": verity_dir(root).is_dir(),
+        "git_repository": is_git_repo(root),
+        "platform": sys.platform,
+        "python": sys.version.split()[0],
+    }
+    if verity_dir(root).is_dir():
+        engine = Engine(root)
+        conn = sqlite3.connect(str(engine.repo.path))
+        try:
+            check = conn.execute("PRAGMA integrity_check").fetchone()
+        finally:
+            conn.close()
+        payload["database"] = {
+            "path": str(engine.repo.path),
+            "schema_version": engine.repo.schema_version,
+            "claims": len(engine.repo.claims()),
+            "integrity": str(check[0] if check else "unknown"),
+        }
+        engine.repo.close()
+    if json_out:
+        console.print_json(json.dumps(payload, indent=2))
+    else:
+        table = Table(box=None, pad_edge=False, header_style="bold bright_black")
+        table.add_column("Diagnostic", style="cyan")
+        table.add_column("Value")
+        for key, value in payload.items():
+            table.add_row(key, str(value))
+        console.print(table)
 
 
 @app.command()

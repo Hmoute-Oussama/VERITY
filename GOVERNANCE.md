@@ -35,3 +35,11 @@ VERITY follows Semantic Versioning:
 Security reports are handled according to `SECURITY.md`. Maintainers target
 acknowledgment within 3 working days and coordinated disclosure after a fix is
 available or mitigated.
+
+## Operational ownership
+
+- One maintainer approves releases.
+- One maintainer owns security triage and advisories.
+- Breaking public API changes require an accepted RFC.
+- Public compatibility claims require a passing CI run and, for agent claims,
+  recorded agent-session evidence.

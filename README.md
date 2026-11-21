@@ -422,6 +422,8 @@ VERITY documents its beta-to-1.0 compatibility baseline:
 - [Database migration guide](docs/migration-guide.md)
 - [GitHub Action usage](docs/github-action.md)
 - [Project onboarding](docs/onboarding.md)
+- [Community readiness](docs/community-readiness.md)
+- [MCP interoperability](docs/mcp-interop.md)
 - [Versioned JSON schemas](schemas/)
 - Stable CLI exit codes: `0` success, `1` verification failure, `2` blocked or invalid input
 - MCP API version `1.0`
