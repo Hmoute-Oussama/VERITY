@@ -12,6 +12,7 @@ from typing import Any
 
 from .engine import Engine
 from .models import Evidence
+from .evidence.registry import verifier_catalog
 
 
 def canonical_json(data: Any) -> bytes:
@@ -57,6 +58,15 @@ def export_evidence_bundle(engine: Engine) -> dict[str, Any]:
                     "created_at": evidence.created_at,
                     "checked_at": evidence.checked_at,
                     "dependencies": engine.repo.evidence_deps(evidence.id),
+                    "proof_scope": {
+                        "verifier": evidence.verifier,
+                        "local_tree": True,
+                        "runtime_state": evidence.verifier in {"http_probe", "environment", "test_execution", "command"},
+                    },
+                    "limitations": [
+                        "Static evidence does not prove deployment or runtime state.",
+                        "External and live-service evidence depends on probe time and configuration.",
+                    ],
                 }
             )
             for path, digest in engine.repo.evidence_deps(evidence.id).items():
@@ -72,6 +82,7 @@ def export_evidence_bundle(engine: Engine) -> dict[str, Any]:
         "claims": claims,
         "evidence": evidence_items,
         "dependencies": dependencies,
+        "verifiers": verifier_catalog(),
     }
     if engine.config.verification.reproducibility_environment:
         body["reproducibility"] = {
@@ -105,6 +116,7 @@ def sign_bundle(bundle: dict[str, Any], private_key_pem: str) -> dict[str, Any]:
         raise RuntimeError("Evidence bundle signing requires an Ed25519 private key")
     unsigned = dict(bundle)
     unsigned.pop("signature", None)
+    unsigned.pop("integrity", None)
     signature = key.sign(canonical_json(unsigned)).hex()
     public_pem = key.public_key().public_bytes(
         serialization.Encoding.PEM,
@@ -149,6 +161,7 @@ def verify_bundle(bundle: dict[str, Any], public_key_pem: str) -> bool:
         return False
     unsigned = dict(bundle)
     unsigned.pop("signature", None)
+    unsigned.pop("integrity", None)
     try:
         public_key.verify(bytes.fromhex(str(signature.get("value") or "")), canonical_json(unsigned))
         return True

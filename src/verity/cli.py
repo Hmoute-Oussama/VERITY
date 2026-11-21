@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shlex
 import sys
@@ -63,6 +64,7 @@ from .validation import validate_config, validate_contracts
 from .output import json_envelope, dumps_versioned, junit_xml, sarif_report
 from .evidence_bundle import verify_bundle, write_evidence_bundle
 from .plugins import discover_plugins
+from .trust import add_trusted_key, load_trusted_keys, remove_trusted_key
 
 app = typer.Typer(
     add_completion=False,
@@ -899,14 +901,20 @@ def keygen(
 
 @app.command("verify-bundle")
 def verify_evidence_bundle(
+    ctx: typer.Context,
     bundle: Path,
     public_key: Path,
     json_out: bool = typer.Option(False, "--json"),
+    trusted_only: bool = typer.Option(False, "--trusted-only"),
 ) -> None:
     """Verify a SHA-256/Ed25519 evidence bundle."""
     try:
         data = json.loads(bundle.read_text(encoding="utf-8"))
         valid = verify_bundle(data, public_key.read_text(encoding="utf-8"))
+        if valid and trusted_only:
+            signature = data.get("signature") or {}
+            trusted = load_trusted_keys(_root(ctx))
+            valid = str(signature.get("key_id") or "") in trusted
     except (OSError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
         if json_out:
             console.print_json(json.dumps({"valid": False, "error": str(exc)}))
@@ -982,10 +990,23 @@ def audit_log(
     engine = _engine(ctx)
     events = engine.repo.events(limit=1000)
     engine.repo.close()
+    previous = "0" * 64
+    chained: list[dict[str, Any]] = []
+    for event in reversed(events):
+        canonical = json.dumps(
+            {**event, "previous_hash": previous},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        current = hashlib.sha256(canonical).hexdigest()
+        chained.append({**event, "previous_hash": previous, "event_hash": current})
+        previous = current
     payload = {
         "schema": "verity.audit.v1",
         "project_root": str(root),
-        "events": events,
+        "chain_algorithm": "sha256",
+        "chain_tip": previous,
+        "events": list(reversed(chained)),
     }
     text = json.dumps(payload, sort_keys=True, indent=2)
     if out:
@@ -1261,6 +1282,9 @@ def run(
         engine.root,
         timeout=engine.config.verification.timeout_seconds,
         shell=False,
+        sandbox_mode=engine.config.verification.sandbox_mode,
+        sandbox_image=engine.config.verification.sandbox_image,
+        sandbox_allow_network=engine.config.verification.sandbox_allow_network,
     )
     if proc.stdout:
         console.print(proc.stdout, end="")
@@ -1592,6 +1616,53 @@ def verifiers(
             ", ".join(str(arg) for arg in spec["args"]),
         )
     console.print(table)
+
+
+@app.command("trust")
+def trust(
+    ctx: typer.Context,
+    action: str = typer.Argument("list", help="list | add | remove"),
+    name: str | None = typer.Option(None, "--name"),
+    public_key: Path | None = typer.Option(None, "--public-key"),
+    key_id: str | None = typer.Option(None, "--key-id"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Manage trusted Ed25519 public keys for evidence bundles."""
+    root = _root(ctx)
+    action = action.lower()
+    if action == "list":
+        keys = load_trusted_keys(root)
+        if json_out:
+            console.print_json(json.dumps({"keys": list(keys.values())}, indent=2))
+        elif not keys:
+            console.print("[bright_black]No trusted signing keys configured.[/bright_black]")
+        else:
+            table = Table(box=None, pad_edge=False, header_style="bold bright_black")
+            table.add_column("Key ID", style="cyan")
+            table.add_column("Name")
+            table.add_column("Status")
+            for key in keys.values():
+                table.add_row(str(key["key_id"]), str(key["name"]), str(key["status"]))
+            console.print(table)
+        return
+    if action == "add":
+        if public_key is None or not public_key.is_file():
+            err_console.print("[red]A public key PEM file is required.[/red]")
+            raise typer.Exit(2)
+        key_id = add_trusted_key(root, name or public_key.stem, public_key.read_text(encoding="utf-8"))
+        console.print(f"[green]trusted key[/green] {escape(key_id)}")
+        return
+    if action == "remove":
+        if not key_id:
+            err_console.print("[red]--key-id is required.[/red]")
+            raise typer.Exit(2)
+        if not remove_trusted_key(root, key_id):
+            err_console.print("[red]Trusted key not found.[/red]")
+            raise typer.Exit(1)
+        console.print(f"[green]removed[/green] {escape(key_id)}")
+        return
+    err_console.print("[red]Unknown trust action.[/red] Use list, add, or remove.")
+    raise typer.Exit(2)
 
 
 @app.command("plugins")

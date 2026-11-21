@@ -19,6 +19,12 @@ Semantic Versioning.
 - Team metadata in evidence bundles.
 - MCP conformance, adversarial, and signing tests.
 - Governance and RFC documentation.
+- MCP payload limits and JSON-RPC validation.
+- Signing trust store and key IDs.
+- Container sandbox and credential-filtering controls.
+- Evidence proof scope and limitations metadata.
+- Backup, restore, diagnostics, and chained audit export.
+- Community Quickstart, incident, agent, plugin, and audit documentation.
 - Security workflows, MCP conformance matrix, backup/restore, audit export,
   diagnostics, signing key IDs, plugin trust metadata, and team policy fields.
 

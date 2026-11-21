@@ -337,7 +337,14 @@ class CommandVerifier:
                 confidence=0.3,
             )
         timeout = float(ctx.config.verification.timeout_seconds or 300)
-        result = run_command(command, ctx.root, timeout=timeout)
+        result = run_command(
+            command,
+            ctx.root,
+            timeout=timeout,
+            sandbox_mode=ctx.config.verification.sandbox_mode,
+            sandbox_image=ctx.config.verification.sandbox_image,
+            sandbox_allow_network=ctx.config.verification.sandbox_allow_network,
+        )
         payload = {
             "command": command,
             "returncode": result.returncode,

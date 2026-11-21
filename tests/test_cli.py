@@ -254,3 +254,21 @@ def test_audit_export(project: Path):
     assert result.exit_code == 0
     data = json.loads(out.read_text(encoding="utf-8"))
     assert data["schema"] == "verity.audit.v1"
+
+
+def test_trust_list_and_add(tmp_path: Path):
+    public_key = tmp_path / "release-public.pem"
+    public_key.write_text(
+        "-----BEGIN PUBLIC KEY-----\ntest\n-----END PUBLIC KEY-----\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(
+        app,
+        ["-C", str(tmp_path), "trust", "add", "--name", "release", "--public-key", str(public_key)],
+    )
+    assert result.exit_code == 0
+
+    result = runner.invoke(app, ["-C", str(tmp_path), "trust", "list", "--json"])
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["keys"][0]["name"] == "release"

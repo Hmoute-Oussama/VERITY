@@ -389,7 +389,14 @@ class SyntaxVerifier:
                     except Exception as exc:
                         failures.append(f"{rel}: {exc}")
                 elif suffix in {".js", ".mjs", ".cjs"} and shutil.which("node"):
-                    result = run_command(["node", "--check", str(path)], ctx.root, timeout=20)
+                    result = run_command(
+                        ["node", "--check", str(path)],
+                        ctx.root,
+                        timeout=20,
+                        sandbox_mode=ctx.config.verification.sandbox_mode,
+                        sandbox_image=ctx.config.verification.sandbox_image,
+                        sandbox_allow_network=ctx.config.verification.sandbox_allow_network,
+                    )
                     if not result.ok:
                         failures.append(f"{rel}: {result.tail(400)}")
                 elif suffix in {".js", ".jsx", ".ts", ".tsx", ".java", ".kt", ".go", ".rs"}:

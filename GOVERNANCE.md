@@ -43,3 +43,19 @@ available or mitigated.
 - Breaking public API changes require an accepted RFC.
 - Public compatibility claims require a passing CI run and, for agent claims,
   recorded agent-session evidence.
+
+## Current project ownership
+
+Until additional maintainers are formally appointed:
+
+- Repository and release ownership: project owner.
+- Security triage: project owner.
+- Community triage: maintainers appointed through issues or discussions.
+- External audit claims: no status is claimed without a published report.
+- Live agent claims: no status is claimed without recorded session evidence.
+
+## Community participation
+
+Contributors may propose verifiers, documentation, integration fixtures,
+security fixes, and agent compatibility reports. Public API changes require
+tests, RFC review, migration documentation, and maintainer approval.

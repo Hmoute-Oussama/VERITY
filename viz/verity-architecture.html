@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>VERITY Architecture Flow</title>
+<title>VERITY — Architecture Flow</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   background: #fff;
@@ -20,70 +20,103 @@ body {
 }
 
 .canvas {
-  width: 1280px;
-  height: 720px;
+  width: 1400px;
+  height: 820px;
   position: relative;
   background: #ffffff;
 }
 
-/* ── NODES ── */
+/* ════════════════════════════════
+   NODE SHELL
+════════════════════════════════ */
 .node {
   position: absolute;
-  border-radius: 16px;
-  text-align: center;
+  border-radius: 14px;
   z-index: 10;
-  transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s;
   cursor: default;
+  overflow: visible;
 }
-.node:hover { transform: translateY(-4px) scale(1.03); }
+.node:hover { transform: translateY(-4px) scale(1.025); }
 
-.node-inner {
-  border-radius: 16px;
-  padding: 18px 20px 15px;
+.card {
+  border-radius: 14px;
   border: 1.5px solid transparent;
-  position: relative;
   overflow: hidden;
+  position: relative;
 }
 
-/* coloured top accent bar */
-.node-inner::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: 16px 16px 0 0;
+/* coloured top bar */
+.card-bar {
+  height: 4px;
+  width: 100%;
 }
 
-.node-icon {
-  font-size: 24px;
-  line-height: 1;
-  display: block;
-  margin-bottom: 8px;
+.card-body {
+  padding: 14px 16px 13px;
 }
-.node-name {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color: #1a1a2e;
-  line-height: 1.2;
-}
-.node-hint {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 7.5px;
-  color: rgba(0,0,0,.38);
-  margin-top: 4px;
-  letter-spacing: .3px;
-}
-.node-chip {
-  display: inline-block;
+
+/* module filename tag */
+.mod-file {
   font-family: 'JetBrains Mono', monospace;
   font-size: 7px;
   font-weight: 500;
-  padding: 2px 7px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  opacity: .45;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.node-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.node-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  opacity: .5;
+  letter-spacing: .3px;
+  line-height: 1.5;
+}
+
+/* detail rows */
+.detail-rows {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  opacity: .55;
+}
+.detail-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* pill badge */
+.pill {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  padding: 2px 8px;
   border-radius: 20px;
-  margin-top: 7px;
-  letter-spacing: .5px;
+  margin-top: 8px;
   text-transform: uppercase;
 }
 
@@ -92,7 +125,6 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
-  justify-content: center;
   margin-top: 8px;
 }
 .tag {
@@ -103,79 +135,106 @@ body {
   letter-spacing: .2px;
 }
 
-/* ── Colour themes ── */
+/* ════════════════════════════════
+   COLOUR THEMES
+════════════════════════════════ */
 
-/* indigo — Agent */
-.th-indigo .node-inner { background: #f5f3ff; border-color: #c4b5fd; box-shadow: 0 2px 12px rgba(99,102,241,.12), 0 0 0 1px rgba(99,102,241,.08); }
-.th-indigo .node-inner::before { background: linear-gradient(90deg,#6366f1,#8b5cf6); }
-.th-indigo .node-icon { color: #4f46e5; }
-.th-indigo .node-chip { background: rgba(99,102,241,.1); color: #4f46e5; border: 1px solid rgba(99,102,241,.2); }
+/* indigo */
+.th-indigo .card { background:#f5f3ff; border-color:#c4b5fd; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(79,70,229,.1),0 0 0 1px rgba(79,70,229,.07); }
+.th-indigo .card-bar { background:linear-gradient(90deg,#4f46e5,#818cf8); }
+.th-indigo .node-name { color:#3730a3; }
+.th-indigo .detail-dot { background:#6366f1; }
+.th-indigo .pill { background:rgba(79,70,229,.1); color:#4338ca; border:1px solid rgba(79,70,229,.2); }
+.th-indigo .mod-file { color:#4f46e5; }
 
-/* violet — Git */
-.th-violet .node-inner { background: #f5f3ff; border-color: #c4b5fd; box-shadow: 0 2px 12px rgba(124,58,237,.12), 0 0 0 1px rgba(124,58,237,.08); }
-.th-violet .node-inner::before { background: linear-gradient(90deg,#7c3aed,#a855f7); }
-.th-violet .node-icon { color: #7c3aed; }
+/* violet */
+.th-violet .card { background:#f5f3ff; border-color:#ddd6fe; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(109,40,217,.1),0 0 0 1px rgba(109,40,217,.07); }
+.th-violet .card-bar { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+.th-violet .node-name { color:#5b21b6; }
+.th-violet .detail-dot { background:#8b5cf6; }
+.th-violet .pill { background:rgba(124,58,237,.1); color:#6d28d9; border:1px solid rgba(124,58,237,.2); }
+.th-violet .mod-file { color:#7c3aed; }
 
-/* orange — Contracts */
-.th-orange .node-inner { background: #fff7ed; border-color: #fed7aa; box-shadow: 0 2px 12px rgba(234,88,12,.12), 0 0 0 1px rgba(234,88,12,.08); }
-.th-orange .node-inner::before { background: linear-gradient(90deg,#ea580c,#f97316); }
-.th-orange .node-icon { color: #ea580c; }
+/* orange */
+.th-orange .card { background:#fff7ed; border-color:#fed7aa; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(234,88,12,.1),0 0 0 1px rgba(234,88,12,.07); }
+.th-orange .card-bar { background:linear-gradient(90deg,#c2410c,#f97316); }
+.th-orange .node-name { color:#9a3412; }
+.th-orange .detail-dot { background:#f97316; }
+.th-orange .pill { background:rgba(234,88,12,.1); color:#c2410c; border:1px solid rgba(234,88,12,.2); }
+.th-orange .mod-file { color:#ea580c; }
 
-/* blue — Extractor */
-.th-blue .node-inner { background: #eff6ff; border-color: #93c5fd; box-shadow: 0 2px 14px rgba(37,99,235,.13), 0 0 0 1px rgba(37,99,235,.08); }
-.th-blue .node-inner::before { background: linear-gradient(90deg,#2563eb,#3b82f6); }
-.th-blue .node-icon { color: #2563eb; }
-.th-blue .node-chip { background: rgba(37,99,235,.08); color: #2563eb; border: 1px solid rgba(37,99,235,.18); }
+/* blue */
+.th-blue .card { background:#eff6ff; border-color:#bfdbfe; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(37,99,235,.12),0 0 0 1px rgba(37,99,235,.07); }
+.th-blue .card-bar { background:linear-gradient(90deg,#1d4ed8,#60a5fa); }
+.th-blue .node-name { color:#1e40af; }
+.th-blue .detail-dot { background:#3b82f6; }
+.th-blue .pill { background:rgba(37,99,235,.09); color:#1d4ed8; border:1px solid rgba(37,99,235,.2); }
+.th-blue .mod-file { color:#2563eb; }
 
-/* cyan — Engine */
-.th-cyan .node-inner { background: #ecfeff; border-color: #67e8f9; box-shadow: 0 4px 24px rgba(8,145,178,.18), 0 0 0 1px rgba(8,145,178,.12); }
-.th-cyan .node-inner::before { background: linear-gradient(90deg,#0891b2,#06b6d4); }
-.th-cyan .node-icon { color: #0891b2; }
-.th-cyan .node-chip { background: rgba(8,145,178,.08); color: #0891b2; border: 1px solid rgba(8,145,178,.2); }
+/* cyan — engine */
+.th-cyan .card { background:#ecfeff; border-color:#a5f3fc; box-shadow:0 2px 6px rgba(0,0,0,.05),0 6px 28px rgba(8,145,178,.16),0 0 0 1px rgba(8,145,178,.1); }
+.th-cyan .card-bar { background:linear-gradient(90deg,#0e7490,#22d3ee); }
+.th-cyan .node-name { color:#155e75; }
+.th-cyan .detail-dot { background:#06b6d4; }
+.th-cyan .pill { background:rgba(8,145,178,.1); color:#0e7490; border:1px solid rgba(8,145,178,.22); }
+.th-cyan .mod-file { color:#0891b2; }
 
-/* green — Verifiers */
-.th-green .node-inner { background: #f0fdf4; border-color: #86efac; box-shadow: 0 2px 12px rgba(22,163,74,.12), 0 0 0 1px rgba(22,163,74,.08); }
-.th-green .node-inner::before { background: linear-gradient(90deg,#16a34a,#22c55e); }
-.th-green .node-icon { color: #16a34a; }
-.th-green .tag { background: rgba(22,163,74,.08); color: #15803d; border: 1px solid rgba(22,163,74,.18); }
+/* green */
+.th-green .card { background:#f0fdf4; border-color:#bbf7d0; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(22,163,74,.1),0 0 0 1px rgba(22,163,74,.07); }
+.th-green .card-bar { background:linear-gradient(90deg,#15803d,#4ade80); }
+.th-green .node-name { color:#14532d; }
+.th-green .detail-dot { background:#22c55e; }
+.th-green .pill { background:rgba(22,163,74,.09); color:#15803d; border:1px solid rgba(22,163,74,.2); }
+.th-green .mod-file { color:#16a34a; }
+.th-green .tag { background:rgba(22,163,74,.08); color:#15803d; border:1px solid rgba(22,163,74,.18); }
 
-/* amber — DB */
-.th-amber .node-inner { background: #fffbeb; border-color: #fcd34d; box-shadow: 0 2px 12px rgba(217,119,6,.12), 0 0 0 1px rgba(217,119,6,.08); }
-.th-amber .node-inner::before { background: linear-gradient(90deg,#d97706,#f59e0b); }
-.th-amber .node-icon { color: #d97706; }
-.th-amber .node-chip { background: rgba(217,119,6,.08); color: #b45309; border: 1px solid rgba(217,119,6,.2); }
+/* amber */
+.th-amber .card { background:#fffbeb; border-color:#fde68a; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(217,119,6,.1),0 0 0 1px rgba(217,119,6,.07); }
+.th-amber .card-bar { background:linear-gradient(90deg,#b45309,#fbbf24); }
+.th-amber .node-name { color:#78350f; }
+.th-amber .detail-dot { background:#f59e0b; }
+.th-amber .pill { background:rgba(217,119,6,.09); color:#92400e; border:1px solid rgba(217,119,6,.2); }
+.th-amber .mod-file { color:#d97706; }
 
-/* red — Guard */
-.th-red .node-inner { background: #fff1f2; border-color: #fda4af; box-shadow: 0 2px 12px rgba(220,38,38,.12), 0 0 0 1px rgba(220,38,38,.08); }
-.th-red .node-inner::before { background: linear-gradient(90deg,#dc2626,#ef4444); }
-.th-red .node-icon { color: #dc2626; }
-.th-red .node-chip { background: rgba(220,38,38,.08); color: #b91c1c; border: 1px solid rgba(220,38,38,.18); }
+/* red */
+.th-red .card { background:#fff1f2; border-color:#fecdd3; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(220,38,38,.1),0 0 0 1px rgba(220,38,38,.07); }
+.th-red .card-bar { background:linear-gradient(90deg,#b91c1c,#f87171); }
+.th-red .node-name { color:#991b1b; }
+.th-red .detail-dot { background:#ef4444; }
+.th-red .pill { background:rgba(220,38,38,.09); color:#b91c1c; border:1px solid rgba(220,38,38,.18); }
+.th-red .mod-file { color:#dc2626; }
 
-/* purple — Outputs */
-.th-purple .node-inner { background: #faf5ff; border-color: #d8b4fe; box-shadow: 0 2px 12px rgba(147,51,234,.12), 0 0 0 1px rgba(147,51,234,.08); }
-.th-purple .node-inner::before { background: linear-gradient(90deg,#9333ea,#a855f7); }
-.th-purple .node-icon { color: #9333ea; }
-.th-purple .node-chip { background: rgba(147,51,234,.08); color: #7e22ce; border: 1px solid rgba(147,51,234,.18); }
+/* purple */
+.th-purple .card { background:#faf5ff; border-color:#e9d5ff; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(147,51,234,.1),0 0 0 1px rgba(147,51,234,.07); }
+.th-purple .card-bar { background:linear-gradient(90deg,#7e22ce,#c084fc); }
+.th-purple .node-name { color:#581c87; }
+.th-purple .detail-dot { background:#a855f7; }
+.th-purple .pill { background:rgba(147,51,234,.09); color:#6b21a8; border:1px solid rgba(147,51,234,.18); }
+.th-purple .mod-file { color:#9333ea; }
 
-/* Engine pulse rings */
+/* ════════════════════════════════
+   ENGINE PULSE RINGS
+════════════════════════════════ */
 .pulse-ring {
   position: absolute;
   inset: -12px;
-  border-radius: 26px;
-  border: 1.5px solid rgba(8,145,178,.35);
+  border-radius: 24px;
+  border: 1.5px solid rgba(8,145,178,.3);
   opacity: 0;
-  animation: pulse 2.6s cubic-bezier(.4,0,.6,1) infinite;
+  animation: pulse 2.8s cubic-bezier(.4,0,.6,1) infinite;
   pointer-events: none;
   z-index: -1;
 }
-.pulse-ring:nth-child(2) { animation-delay: .87s; }
-.pulse-ring:nth-child(3) { animation-delay: 1.74s; }
+.pulse-ring:nth-child(2) { animation-delay: .93s; }
+.pulse-ring:nth-child(3) { animation-delay: 1.86s; }
 @keyframes pulse {
-  0%   { opacity: .5;  transform: scale(1); }
-  100% { opacity: 0;   transform: scale(1.2); }
+  0%   { opacity:.5;  transform:scale(1); }
+  100% { opacity:0;   transform:scale(1.2); }
 }
 
-/* ── SVG edge layer ── */
+/* ════════════════════════════════
+   SVG FLOW
+════════════════════════════════ */
 svg.flow {
   position: absolute;
   inset: 0;
@@ -186,142 +245,398 @@ svg.flow {
   overflow: visible;
 }
 
-/* ── Legend ── */
+/* ════════════════════════════════
+   STAGE LABELS
+════════════════════════════════ */
+.stage {
+  position: absolute;
+  top: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.18);
+  z-index: 2;
+}
+
+/* ════════════════════════════════
+   LEGEND
+════════════════════════════════ */
 .legend {
   position: absolute;
-  bottom: 20px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 22px;
-  z-index: 20;
+  gap: 24px;
   align-items: center;
+  z-index: 20;
 }
 .leg {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 8px;
-  color: rgba(0,0,0,.35);
+  font-weight: 600;
   letter-spacing: .8px;
   text-transform: uppercase;
-  font-weight: 600;
+  color: rgba(0,0,0,.3);
 }
-.leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ════════════════════════════════
+   NODE ARRIVAL FLASH
+════════════════════════════════ */
+@keyframes node-flash {
+  0%   { opacity: 0; transform: scale(1); }
+  25%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.14); }
+}
+.node-flash {
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 11;
+  border: 1.5px solid currentColor;
+  animation: node-flash 0.55s cubic-bezier(.2,0,.4,1) forwards;
+}
+
+/* ════════════════════════════════
+   PRESENTATION MODE
+════════════════════════════════ */
+body.present {
+  background: #fff;
+}
+body.present .canvas {
+  box-shadow: 0 8px 48px rgba(0,0,0,.08);
+}
+
+/* presentation toggle button */
+#present-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: rgba(0,0,0,.06);
+  border: 1px solid rgba(0,0,0,.12);
+  color: rgba(0,0,0,.45);
+  cursor: pointer;
+  transition: background .15s, color .15s, opacity .15s;
+  user-select: none;
+}
+#present-btn:hover {
+  background: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.7);
+}
+/* hide button while in present mode (clean recording) */
+body.present #present-btn {
+  opacity: 0;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
 <div class="canvas" id="canvas">
 
-  <!-- ══ COLUMN 1 — INPUTS ══ -->
-  <div class="node th-indigo" id="n-agent" style="left:28px;top:108px;width:148px;">
-    <div class="node-inner">
-      <div class="node-name">Agent Text</div>
-      <div class="node-hint">prose · commands</div>
-    </div>
-  </div>
+  <!-- Stage labels -->
+  <div class="stage" style="left:44px">① Inputs</div>
+  <div class="stage" style="left:252px">② Extract</div>
+  <div class="stage" style="left:490px">③ Engine</div>
+  <div class="stage" style="left:762px">④ Verify &amp; Store</div>
+  <div class="stage" style="left:1072px">⑤ Outputs</div>
 
-  <div class="node th-violet" id="n-git" style="left:28px;top:296px;width:148px;">
-    <div class="node-inner">
-      <div class="node-name">Git Diff</div>
-      <div class="node-hint">changed files</div>
-    </div>
-  </div>
+  <!-- ══════════════════════════════
+       COL 1 — INPUTS
+  ══════════════════════════════ -->
 
-  <div class="node th-orange" id="n-contracts" style="left:28px;top:482px;width:148px;">
-    <div class="node-inner">
-      <div class="node-name">Contracts</div>
-      <div class="node-hint">contracts.yaml</div>
-    </div>
-  </div>
-
-  <!-- ══ COLUMN 2 — EXTRACTOR ══ -->
-  <div class="node th-blue" id="n-extract" style="left:230px;top:220px;width:162px;">
-    <div class="node-inner">
-      <div class="node-name">Claim Extractor</div>
-      <div class="node-hint">regex · dedup</div>
-      <div class="node-chip">ClaimDraft[ ]</div>
-    </div>
-  </div>
-
-  <!-- ══ COLUMN 3 — ENGINE (centre) ══ -->
-  <div class="node th-cyan" id="n-engine" style="left:450px;top:248px;width:220px;">
-    <div class="pulse-ring"></div>
-    <div class="pulse-ring"></div>
-    <div class="pulse-ring"></div>
-    <div class="node-inner">
-      <div class="node-name" style="font-size:13px;letter-spacing:2px">Engine</div>
-      <div class="node-hint" style="font-size:8px">analyze · verify · invalidate</div>
-      <div class="node-chip">Orchestrator</div>
-    </div>
-  </div>
-
-  <!-- Guard below engine -->
-  <div class="node th-red" id="n-guard" style="left:460px;top:510px;width:200px;">
-    <div class="node-inner">
-      <div class="node-name">Action Guard</div>
-      <div class="node-hint">prerequisite firewall</div>
-      <div class="node-chip">Allow · Warn · Block</div>
-    </div>
-  </div>
-
-  <!-- ══ COLUMN 4 — VERIFY & STORE ══ -->
-  <div class="node th-green" id="n-verifiers" style="left:730px;top:92px;width:188px;">
-    <div class="node-inner">
-      <div class="node-name">21 Verifiers</div>
-      <div class="tags">
-        <span class="tag">code_symbol</span>
-        <span class="tag">file_exists</span>
-        <span class="tag">dependency</span>
-        <span class="tag">test_exec</span>
-        <span class="tag">secret_scan</span>
-        <span class="tag">http_probe</span>
-        <span class="tag">openapi</span>
-        <span class="tag">+14 more</span>
+  <!-- Agent Text -->
+  <div class="node th-indigo" id="n-agent" style="left:28px;top:66px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">source: agent</span>
+        <div class="node-name">Agent Text</div>
+        <div class="node-desc">Prose · Transcripts</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Natural language input</div>
+          <div class="detail-row"><div class="detail-dot"></div>Shell commands</div>
+          <div class="detail-row"><div class="detail-dot"></div>JSON/JSONL transcripts</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="node th-amber" id="n-db" style="left:730px;top:396px;width:188px;">
-    <div class="node-inner">
-      <span class="node-icon">🗄️</span>
-      <div class="node-name">SQLite Store</div>
-      <div class="node-hint">claims · evidence · digests</div>
-      <div class="node-chip">SHA-256 hashes</div>
+  <!-- Git Diff -->
+  <div class="node th-violet" id="n-git" style="left:28px;top:282px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">gitutils.py</span>
+        <div class="node-name">Git Diff</div>
+        <div class="node-desc">Working tree changes</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Added / removed lines</div>
+          <div class="detail-row"><div class="detail-dot"></div>File status (A/M/D/R)</div>
+          <div class="detail-row"><div class="detail-dot"></div>HEAD commit SHA</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ══ COLUMN 5 — OUTPUTS ══ -->
-  <div class="node th-purple" id="n-cli" style="left:978px;top:92px;width:148px;">
-    <div class="node-inner">
-      <span class="node-icon">💻</span>
-      <div class="node-name">CLI</div>
-      <div class="node-hint">verity status</div>
+  <!-- Contracts -->
+  <div class="node th-orange" id="n-contracts" style="left:28px;top:496px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">contracts.py</span>
+        <div class="node-name">Contracts</div>
+        <div class="node-desc">.verity/contracts.yaml</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Required claims list</div>
+          <div class="detail-row"><div class="detail-dot"></div>Verifier + args per claim</div>
+          <div class="detail-row"><div class="detail-dot"></div>Completion gate</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="node th-purple" id="n-mcp" style="left:978px;top:252px;width:148px;">
-    <div class="node-inner">
-      <span class="node-icon">🔌</span>
-      <div class="node-name">MCP Server</div>
-      <div class="node-hint">7 tools · stdio</div>
-      <div class="node-chip">MCP</div>
+  <!-- ══════════════════════════════
+       COL 2 — EXTRACTOR
+  ══════════════════════════════ -->
+
+  <div class="node th-blue" id="n-extract" style="left:244px;top:200px;width:188px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">claims/extractor.py</span>
+        <div class="node-name">Claim Extractor</div>
+        <div class="node-desc">Text → structured claims</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Regex rule engine</div>
+          <div class="detail-row"><div class="detail-dot"></div>extract_from_text()</div>
+          <div class="detail-row"><div class="detail-dot"></div>extract_from_changes()</div>
+          <div class="detail-row"><div class="detail-dot"></div>SHA-256 deduplication</div>
+        </div>
+        <div class="pill">ClaimDraft[ ]</div>
+      </div>
     </div>
   </div>
 
-  <div class="node th-purple" id="n-http" style="left:978px;top:410px;width:148px;">
-    <div class="node-inner">
-      <span class="node-icon">🌐</span>
-      <div class="node-name">HTTP Dashboard</div>
-      <div class="node-hint">local REST API</div>
+  <!-- Config -->
+  <div class="node th-indigo" id="n-config" style="left:244px;top:490px;width:188px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">config.py</span>
+        <div class="node-name">Config</div>
+        <div class="node-desc">.verity/config.yaml</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>VerificationConfig</div>
+          <div class="detail-row"><div class="detail-dot"></div>PolicyConfig</div>
+          <div class="detail-row"><div class="detail-dot"></div>EvidenceConfig</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="node th-purple" id="n-snap" style="left:978px;top:548px;width:148px;">
-    <div class="node-inner">
-      <span class="node-icon">📸</span>
-      <div class="node-name">Snapshot</div>
-      <div class="node-hint">snapshot.md</div>
+  <!-- ══════════════════════════════
+       COL 3 — ENGINE
+  ══════════════════════════════ -->
+
+  <div class="node th-cyan" id="n-engine" style="left:482px;top:230px;width:232px;">
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">engine.py</span>
+        <div class="node-name" style="font-size:13px;letter-spacing:2px">Engine</div>
+        <div class="node-desc">Central orchestrator</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Engine.analyze()</div>
+          <div class="detail-row"><div class="detail-dot"></div>Engine.verify_claims()</div>
+          <div class="detail-row"><div class="detail-dot"></div>Engine.invalidate_stale()</div>
+          <div class="detail-row"><div class="detail-dot"></div>Engine.status()</div>
+          <div class="detail-row"><div class="detail-dot"></div>compute_claim_status()</div>
+        </div>
+        <div class="pill">Orchestrator</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guard -->
+  <div class="node th-red" id="n-guard" style="left:490px;top:542px;width:216px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">guard.py</span>
+        <div class="node-name">Action Guard</div>
+        <div class="node-desc">Prerequisite firewall</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>check_action()</div>
+          <div class="detail-row"><div class="detail-dot"></div>execute_guarded()</div>
+          <div class="detail-row"><div class="detail-dot"></div>scan_assumptions()</div>
+          <div class="detail-row"><div class="detail-dot"></div>DependencyCheck rules</div>
+        </div>
+        <div class="pill">Allow · Warn · Block</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       COL 4 — VERIFY & STORE
+  ══════════════════════════════ -->
+
+  <!-- Verifiers -->
+  <div class="node th-green" id="n-verifiers" style="left:764px;top:52px;width:220px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">evidence/registry.py</span>
+        <div class="node-name">21 Verifiers</div>
+        <div class="node-desc">Independent checks</div>
+        <div class="tags">
+          <span class="tag">code_symbol</span>
+          <span class="tag">code_route</span>
+          <span class="tag">file_exists</span>
+          <span class="tag">dependency</span>
+          <span class="tag">test_exec</span>
+          <span class="tag">secret_scan</span>
+          <span class="tag">http_probe</span>
+          <span class="tag">openapi</span>
+          <span class="tag">migration</span>
+          <span class="tag">database_schema</span>
+          <span class="tag">lockfile</span>
+          <span class="tag">environment</span>
+          <span class="tag">sbom</span>
+          <span class="tag">security_analysis</span>
+          <span class="tag">+7 more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SQLite Store -->
+  <div class="node th-amber" id="n-db" style="left:764px;top:422px;width:220px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">db.py · Repository</span>
+        <div class="node-name">SQLite Store</div>
+        <div class="node-desc">.verity/verity.db</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>claims table</div>
+          <div class="detail-row"><div class="detail-dot"></div>evidence table</div>
+          <div class="detail-row"><div class="detail-dot"></div>evidence_deps (SHA-256)</div>
+          <div class="detail-row"><div class="detail-dot"></div>events audit log</div>
+          <div class="detail-row"><div class="detail-dot"></div>Invalidation on file change</div>
+        </div>
+        <div class="pill">SHA-256 digests</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph / Snapshot -->
+  <div class="node th-blue" id="n-graph" style="left:764px;top:638px;width:220px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">snapshot.py · graph.py</span>
+        <div class="node-name">Graph &amp; Snapshot</div>
+        <div class="node-desc">Derived representations</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>EvidenceGraph (DOT/JSON)</div>
+          <div class="detail-row"><div class="detail-dot"></div>build_snapshot()</div>
+          <div class="detail-row"><div class="detail-dot"></div>build_agent_context()</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       COL 5 — OUTPUTS
+  ══════════════════════════════ -->
+
+  <!-- CLI -->
+  <div class="node th-purple" id="n-cli" style="left:1060px;top:52px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">cli.py · Typer</span>
+        <div class="node-name">CLI</div>
+        <div class="node-desc">Terminal interface</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>verity analyze</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity verify</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity status</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity guard</div>
+        </div>
+        <div class="pill">Exit 0 / 1 / 2</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MCP -->
+  <div class="node th-purple" id="n-mcp" style="left:1060px;top:272px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">server/mcp.py</span>
+        <div class="node-name">MCP Server</div>
+        <div class="node-desc">stdio protocol</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>verity_reality</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity_check_action</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity_verify_claim</div>
+          <div class="detail-row"><div class="detail-dot"></div>verity_contract_check</div>
+        </div>
+        <div class="pill">7 tools</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTTP -->
+  <div class="node th-purple" id="n-http" style="left:1060px;top:480px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">server/http.py</span>
+        <div class="node-name">HTTP Dashboard</div>
+        <div class="node-desc">Local REST API</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>GET /status</div>
+          <div class="detail-row"><div class="detail-dot"></div>GET /claims</div>
+          <div class="detail-row"><div class="detail-dot"></div>GET /evidence</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrations -->
+  <div class="node th-violet" id="n-integrations" style="left:1060px;top:650px;width:166px;">
+    <div class="card">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <span class="mod-file">integrations.py</span>
+        <div class="node-name">Integrations</div>
+        <div class="node-desc">Agent config writers</div>
+        <div class="detail-rows">
+          <div class="detail-row"><div class="detail-dot"></div>Claude Code</div>
+          <div class="detail-row"><div class="detail-dot"></div>Cursor / Windsurf</div>
+          <div class="detail-row"><div class="detail-dot"></div>GitHub Actions</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -342,38 +657,47 @@ svg.flow {
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════
-   EDGE TABLE
-═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   VERITY Architecture — Enhanced Animation Engine
+   ─ Comet particles with glowing tails
+   ─ Per-edge speed variation + staggered spawning
+   ─ Node arrival flash (brief border pulse on target node)
+   ─ Subtle edge-line shimmer (animated gradient offset)
+   ─ Presentation / recording mode (press P or Escape)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Edge definitions (unchanged from original) ── */
 const EDGES = [
-  { from:'n-agent',    to:'n-extract',   color:'#6366f1', dir:'RL', label:'text'           },
-  { from:'n-git',      to:'n-extract',   color:'#8b5cf6', dir:'RL', label:'diff'           },
-  { from:'n-contracts',to:'n-engine',    color:'#f97316', dir:'RL', label:'requirements'   },
-  { from:'n-extract',  to:'n-engine',    color:'#3b82f6', dir:'RL', label:'ClaimDraft[ ]'  },
-  { from:'n-engine',   to:'n-verifiers', color:'#06b6d4', dir:'TB', label:'verify()'       },
-  { from:'n-verifiers',to:'n-engine',    color:'#22c55e', dir:'BT', label:'EvidenceResult' },
-  { from:'n-engine',   to:'n-db',        color:'#f59e0b', dir:'BT', label:'persist'        },
-  { from:'n-db',       to:'n-engine',    color:'#f59e0b', dir:'TB', label:'read'           },
-  { from:'n-engine',   to:'n-guard',     color:'#ef4444', dir:'BT', label:'check_action()' },
-  { from:'n-db',       to:'n-cli',       color:'#a855f7', dir:'RL', label:''               },
-  { from:'n-db',       to:'n-mcp',       color:'#a855f7', dir:'RL', label:''               },
-  { from:'n-db',       to:'n-http',      color:'#a855f7', dir:'RL', label:''               },
-  { from:'n-db',       to:'n-snap',      color:'#a855f7', dir:'RL', label:''               },
+  { from:'n-agent',    to:'n-extract',      color:'#6366f1', dir:'RL', label:'text / commands',   speed: 1.0 },
+  { from:'n-git',      to:'n-extract',      color:'#8b5cf6', dir:'RL', label:'FileChange[ ]',     speed: 0.9 },
+  { from:'n-contracts',to:'n-engine',       color:'#f97316', dir:'RL', label:'required claims',   speed: 0.75 },
+  { from:'n-config',   to:'n-engine',       color:'#6366f1', dir:'RL', label:'Config',            speed: 0.65 },
+  { from:'n-extract',  to:'n-engine',       color:'#3b82f6', dir:'RL', label:'ClaimDraft[ ]',     speed: 1.1 },
+  { from:'n-engine',   to:'n-verifiers',    color:'#06b6d4', dir:'TB', label:'verify(claim, ctx)',speed: 1.2 },
+  { from:'n-verifiers',to:'n-engine',       color:'#22c55e', dir:'BT', label:'EvidenceResult',    speed: 1.15 },
+  { from:'n-engine',   to:'n-db',           color:'#f59e0b', dir:'BT', label:'persist evidence',  speed: 0.85 },
+  { from:'n-db',       to:'n-engine',       color:'#f59e0b', dir:'TB', label:'claims / status',   speed: 0.8 },
+  { from:'n-engine',   to:'n-guard',        color:'#ef4444', dir:'BT', label:'check_action()',    speed: 0.7 },
+  { from:'n-db',       to:'n-graph',        color:'#3b82f6', dir:'BT', label:'',                  speed: 0.6 },
+  { from:'n-db',       to:'n-cli',          color:'#a855f7', dir:'RL', label:'',                  speed: 0.75 },
+  { from:'n-db',       to:'n-mcp',          color:'#a855f7', dir:'RL', label:'',                  speed: 0.8 },
+  { from:'n-db',       to:'n-http',         color:'#a855f7', dir:'RL', label:'',                  speed: 0.7 },
+  { from:'n-graph',    to:'n-integrations', color:'#8b5cf6', dir:'RL', label:'',                  speed: 0.65 },
 ];
 
 const NS  = 'http://www.w3.org/2000/svg';
 const SVG = document.getElementById('svg');
 const CAN = document.getElementById('canvas');
 
-/* ── bbox of a node relative to canvas ── */
+/* ── Helpers ── */
 function box(id) {
   const el = document.getElementById(id);
   const cr = CAN.getBoundingClientRect();
   const r  = el.getBoundingClientRect();
   const x = r.left - cr.left, y = r.top - cr.top;
-  return { x, y, w: r.width, h: r.height,
-           cx: x + r.width/2,  cy: y + r.height/2,
-           r:  x + r.width,    b:  y + r.height };
+  return { x, y, w:r.width, h:r.height,
+           cx:x+r.width/2, cy:y+r.height/2,
+           r:x+r.width,    b:y+r.height };
 }
 
 function mkEl(tag, attrs) {
@@ -382,42 +706,52 @@ function mkEl(tag, attrs) {
   return e;
 }
 
-/* ── Cubic bezier control points ── */
 function ctrlPts(e) {
   const f = box(e.from), t = box(e.to);
   if (e.dir === 'RL') {
     const x1=f.r, y1=f.cy, x2=t.x, y2=t.cy;
-    const dx = Math.abs(x2-x1) * 0.48;
-    return { x1, y1, cx1:x1+dx, cy1:y1, cx2:x2-dx, cy2:y2, x2, y2 };
+    const dx = Math.abs(x2-x1) * 0.46;
+    return { x1,y1, cx1:x1+dx, cy1:y1, cx2:x2-dx, cy2:y2, x2,y2 };
   }
   if (e.dir === 'TB') {
     const x1=f.cx, y1=f.y, x2=t.cx, y2=t.b;
-    const dy = Math.abs(y2-y1) * 0.4;
-    return { x1, y1, cx1:x1, cy1:y1-dy, cx2:x2, cy2:y2+dy, x2, y2 };
+    const dy = Math.abs(y2-y1) * 0.38;
+    return { x1,y1, cx1:x1, cy1:y1-dy, cx2:x2, cy2:y2+dy, x2,y2 };
   }
   /* BT */
   const x1=f.cx, y1=f.b, x2=t.cx, y2=t.y;
-  const dy = Math.abs(y2-y1) * 0.4;
-  return { x1, y1, cx1:x1, cy1:y1+dy, cx2:x2, cy2:y2-dy, x2, y2 };
+  const dy = Math.abs(y2-y1) * 0.38;
+  return { x1,y1, cx1:x1, cy1:y1+dy, cx2:x2, cy2:y2-dy, x2,y2 };
 }
 
 function pathD(p) {
-  const f = (n) => n.toFixed(1);
+  const f = n => n.toFixed(1);
   return `M${f(p.x1)},${f(p.y1)} C${f(p.cx1)},${f(p.cy1)} ${f(p.cx2)},${f(p.cy2)} ${f(p.x2)},${f(p.y2)}`;
 }
 
+/* cubic bezier point + derivative for comet heading */
 function bezPt(p, t) {
-  const mt = 1-t;
+  const mt=1-t;
   return {
     x: mt*mt*mt*p.x1 + 3*mt*mt*t*p.cx1 + 3*mt*t*t*p.cx2 + t*t*t*p.x2,
     y: mt*mt*mt*p.y1 + 3*mt*mt*t*p.cy1 + 3*mt*t*t*p.cy2 + t*t*t*p.y2,
   };
 }
 
-/* ═══════════════════════════════════════════════
-   BUILD GRAPH
-═══════════════════════════════════════════════ */
-let edgePts = [];
+/* approximate path length via sample */
+function pathLength(pts, samples=40) {
+  let len=0, prev=bezPt(pts, 0);
+  for (let i=1; i<=samples; i++) {
+    const cur=bezPt(pts, i/samples);
+    const dx=cur.x-prev.x, dy=cur.y-prev.y;
+    len+=Math.sqrt(dx*dx+dy*dy);
+    prev=cur;
+  }
+  return len;
+}
+
+/* ── Build graph ── */
+let edgePts = [];   /* { ...pts, color, speed, length, toId } */
 
 function buildGraph() {
   SVG.innerHTML = '';
@@ -425,132 +759,292 @@ function buildGraph() {
 
   const defs = mkEl('defs', {});
 
-  /* particle glow */
-  const pf = mkEl('filter', { id:'pg', x:'-120%', y:'-120%', width:'340%', height:'340%' });
-  const pb = mkEl('feGaussianBlur', { stdDeviation:'3', result:'blur' });
+  /* ── Particle glow filter ── */
+  const pf = mkEl('filter', { id:'pg', x:'-150%', y:'-150%', width:'400%', height:'400%', 'color-interpolation-filters':'sRGB' });
+  const pb = mkEl('feGaussianBlur', { in:'SourceGraphic', stdDeviation:'2.4', result:'blur' });
   const pm = mkEl('feMerge', {});
   pm.appendChild(mkEl('feMergeNode', { in:'blur' }));
   pm.appendChild(mkEl('feMergeNode', { in:'SourceGraphic' }));
   pf.appendChild(pb); pf.appendChild(pm); defs.appendChild(pf);
 
+  /* ── Soft edge glow filter ── */
+  const ef = mkEl('filter', { id:'eg', x:'-30%', y:'-30%', width:'160%', height:'160%' });
+  ef.appendChild(mkEl('feGaussianBlur', { in:'SourceGraphic', stdDeviation:'1.5' }));
+  defs.appendChild(ef);
+
+  /* per-edge arrowheads + gradients */
   EDGES.forEach((e, i) => {
     /* arrowhead */
     const mk = mkEl('marker', { id:`ar${i}`, markerWidth:'9', markerHeight:'9', refX:'7', refY:'3.5', orient:'auto' });
-    const poly = mkEl('polygon', { points:'0,0 7,3.5 0,7', fill: e.color + 'cc' });
-    mk.appendChild(poly); defs.appendChild(mk);
+    mk.appendChild(mkEl('polygon', { points:'0,0 7,3.5 0,7', fill:e.color+'bb' }));
+    defs.appendChild(mk);
 
-    /* gradient along path */
+    /* animated shimmer gradient */
     const pts = ctrlPts(e);
     const g = mkEl('linearGradient', { id:`gr${i}`, x1:pts.x1, y1:pts.y1, x2:pts.x2, y2:pts.y2, gradientUnits:'userSpaceOnUse' });
-    g.appendChild(mkEl('stop', { offset:'0%',   'stop-color':e.color, 'stop-opacity':'.06' }));
-    g.appendChild(mkEl('stop', { offset:'45%',  'stop-color':e.color, 'stop-opacity':'.55' }));
-    g.appendChild(mkEl('stop', { offset:'100%', 'stop-color':e.color, 'stop-opacity':'.08' }));
+    g.appendChild(mkEl('stop', { offset:'0%',   'stop-color':e.color, 'stop-opacity':'.04' }));
+    g.appendChild(mkEl('stop', { offset:'50%',  'stop-color':e.color, 'stop-opacity':'.52' }));
+    g.appendChild(mkEl('stop', { offset:'100%', 'stop-color':e.color, 'stop-opacity':'.06' }));
     defs.appendChild(g);
   });
 
   SVG.appendChild(defs);
 
+  /* draw edges */
   EDGES.forEach((e, i) => {
     const pts = ctrlPts(e);
     const d   = pathD(pts);
+    const len = pathLength(pts);
 
-    /* wide soft glow behind */
+    /* background soft glow path */
     SVG.appendChild(mkEl('path', {
       d, fill:'none', stroke:e.color,
-      'stroke-width':'6', 'stroke-linecap':'round',
-      opacity:'.04',
+      'stroke-width':'5', 'stroke-linecap':'round', opacity:'.035',
     }));
 
-    /* main gradient line */
-    SVG.appendChild(mkEl('path', {
-      d, fill:'none',
-      stroke:`url(#gr${i})`,
-      'stroke-width':'2',
-      'stroke-linecap':'round',
+    /* main gradient line — assign an id so shimmer can target it */
+    const mainPath = mkEl('path', {
+      id: `ep${i}`,
+      d, fill:'none', stroke:`url(#gr${i})`,
+      'stroke-width':'1.8', 'stroke-linecap':'round',
       'marker-end':`url(#ar${i})`,
-    }));
+    });
+    SVG.appendChild(mainPath);
 
     /* edge label */
     if (e.label) {
       const mid = bezPt(pts, .5);
       const lbl = mkEl('text', {
-        x: mid.x, y: mid.y - 7,
-        'font-family': "'JetBrains Mono',monospace",
-        'font-size': '7.5',
-        fill: e.color,
-        opacity: '.5',
-        'text-anchor': 'middle',
+        x:mid.x, y:mid.y-7,
+        'font-family':"'JetBrains Mono',monospace",
+        'font-size':'7', fill:e.color, opacity:'.48',
+        'text-anchor':'middle',
       });
       lbl.textContent = e.label;
       SVG.appendChild(lbl);
     }
 
-    edgePts.push({ ...pts, color:e.color, idx:i });
+    edgePts.push({ ...pts, color:e.color, speed:e.speed, len, toId:e.to, idx:i });
   });
 }
 
-/* ═══════════════════════════════════════════════
-   PARTICLES
-═══════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════
+   PARTICLE SYSTEM
+   Each particle is a comet: glowing head + fading tail
+════════════════════════════════════════════════════ */
 const particles = [];
-const MAX = 72;
+const TAIL_LEN  = 8;   /* tail sample count */
+const BASE_SPEED = 0.0022;
+const MAX_PARTICLES = 90;
 
-function spawn() {
-  if (!edgePts.length || particles.length >= MAX) return;
-  const ep = edgePts[Math.floor(Math.random() * edgePts.length)];
+/* Per-edge minimum gap so edges aren't all firing at once */
+const edgeLastSpawn = {};
+const EDGE_MIN_GAP  = 320; /* ms */
 
-  const dot = mkEl('circle', { r:'0', fill:ep.color, filter:'url(#pg)', opacity:'0' });
-  SVG.appendChild(dot);
+function spawnOnEdge(epIdx) {
+  if (particles.length >= MAX_PARTICLES) return;
+  const ep = edgePts[epIdx];
+
+  /* head circle */
+  const head = mkEl('circle', { r:'0', fill:ep.color, filter:'url(#pg)', opacity:'0' });
+  SVG.appendChild(head);
+
+  /* tail — an array of small circles that trail behind */
+  const tail = [];
+  for (let k=0; k<TAIL_LEN; k++) {
+    const tc = mkEl('circle', { r:'0', fill:ep.color, opacity:'0' });
+    SVG.insertBefore(tc, head);   /* behind head in z-order */
+    tail.push(tc);
+  }
+
+  const speed = BASE_SPEED * ep.speed * (0.88 + Math.random() * 0.24);
 
   particles.push({
-    dot,
-    p: ep,
+    head, tail,
+    ep,
     t: 0,
-    speed: .0022 + Math.random() * .003,
-    maxR: 3 + Math.random() * 1.6,
+    speed,
+    maxR: 2.6 + Math.random() * 1.2,
+    history: [],   /* recent positions for tail */
+    done: false,
   });
 }
 
+function spawnRandom(now) {
+  if (!edgePts.length) return;
+  /* pick an edge that hasn't fired recently, weighted by speed */
+  const eligible = edgePts.filter((_, i) => {
+    const last = edgeLastSpawn[i] || 0;
+    return (now - last) >= EDGE_MIN_GAP;
+  });
+  if (!eligible.length) return;
+  const ep = eligible[Math.floor(Math.random() * eligible.length)];
+  edgeLastSpawn[ep.idx] = now;
+  spawnOnEdge(ep.idx);
+}
+
+/* ── Node arrival flash ── */
+function flashNode(nodeId, color) {
+  const el = document.getElementById(nodeId);
+  if (!el) return;
+  /* remove any existing flash */
+  const old = el.querySelector('.node-flash');
+  if (old) old.remove();
+  const f = document.createElement('div');
+  f.className = 'node-flash';
+  f.style.color = color;
+  el.appendChild(f);
+  f.addEventListener('animationend', () => f.remove(), { once:true });
+}
+
+/* ════════════════════════════════════════════════════
+   SHIMMER — periodic brightness wave along each edge
+════════════════════════════════════════════════════ */
+const shimmerOffsets = EDGES.map(() => Math.random() * 1000); /* stagger start */
+const SHIMMER_PERIOD = 3400; /* ms per cycle */
+
+function updateShimmers(now) {
+  EDGES.forEach((e, i) => {
+    const g = SVG.querySelector(`#gr${i}`)
+      || SVG.getElementById?.(`gr${i}`);
+    /* find the gradient in defs */
+    const gradEl = SVG.ownerDocument.getElementById(`gr${i}`);
+    if (!gradEl) return;
+    const phase = ((now + shimmerOffsets[i]) % SHIMMER_PERIOD) / SHIMMER_PERIOD;
+    /* pulse the mid-stop opacity between .35 and .62 */
+    const mid = gradEl.children[1];
+    if (mid) {
+      const op = 0.35 + 0.27 * Math.abs(Math.sin(phase * Math.PI));
+      mid.setAttribute('stop-opacity', op.toFixed(3));
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   MAIN TICK
+════════════════════════════════════════════════════ */
 let lastT = 0, spawnAcc = 0;
 
 function tick(now) {
   const dt = Math.min(now - lastT, 50);
   lastT = now;
   spawnAcc += dt;
-  if (spawnAcc > 160) { spawn(); spawnAcc = 0; }
+
+  if (spawnAcc > 155) {
+    spawnRandom(now);
+    spawnAcc = 0;
+  }
+
+  updateShimmers(now);
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.t += p.speed;
-    if (p.t >= 1) { p.dot.remove(); particles.splice(i,1); continue; }
 
-    const pt = bezPt(p.p, p.t);
-    const t  = p.t;
+    if (p.t >= 1.0) {
+      /* arrival: flash the target node */
+      flashNode(p.ep.toId, p.ep.color);
+      /* remove all SVG elements */
+      p.head.remove();
+      p.tail.forEach(tc => tc.remove());
+      particles.splice(i, 1);
+      continue;
+    }
+
+    const pt  = bezPt(p.ep, p.t);
+    const t   = p.t;
+
+    /* fade envelope */
     let alpha = 1;
-    if (t < .08) alpha = t / .08;
-    else if (t > .88) alpha = (1-t) / .12;
+    if (t < 0.06)  alpha = t / 0.06;
+    else if (t > 0.86) alpha = (1 - t) / 0.14;
 
+    /* size: sine arc */
     const r = p.maxR * Math.sin(t * Math.PI);
-    p.dot.setAttribute('cx', pt.x.toFixed(2));
-    p.dot.setAttribute('cy', pt.y.toFixed(2));
-    p.dot.setAttribute('r',  r.toFixed(2));
-    p.dot.setAttribute('opacity', (alpha * .92).toFixed(3));
+
+    /* update head */
+    p.head.setAttribute('cx', pt.x.toFixed(2));
+    p.head.setAttribute('cy', pt.y.toFixed(2));
+    p.head.setAttribute('r',  Math.max(0, r).toFixed(2));
+    p.head.setAttribute('opacity', (alpha * 0.92).toFixed(3));
+
+    /* record position history for tail */
+    p.history.push({ x:pt.x, y:pt.y });
+    if (p.history.length > TAIL_LEN * 3) p.history.shift();
+
+    /* update tail circles, evenly spaced back through history */
+    p.tail.forEach((tc, k) => {
+      const lookback = Math.floor((k + 1) * (p.history.length / TAIL_LEN));
+      const histIdx  = Math.max(0, p.history.length - 1 - lookback);
+      const hpt = p.history[histIdx] || pt;
+      const tailFrac = 1 - (k + 1) / TAIL_LEN;
+      const tr = Math.max(0, r * tailFrac * 0.72);
+      const ta = alpha * tailFrac * 0.38;
+      tc.setAttribute('cx', hpt.x.toFixed(2));
+      tc.setAttribute('cy', hpt.y.toFixed(2));
+      tc.setAttribute('r',  tr.toFixed(2));
+      tc.setAttribute('opacity', ta.toFixed(3));
+    });
   }
 
   requestAnimationFrame(tick);
 }
 
-/* ═══════════════════════════════════════════════
+/* ════════════════════════════════════════════════════
+   PRESENTATION MODE
+════════════════════════════════════════════════════ */
+(function setupPresentationMode() {
+  /* inject button */
+  const btn = document.createElement('button');
+  btn.id = 'present-btn';
+  btn.textContent = '⊞  Present';
+  document.body.appendChild(btn);
+
+  let presenting = false;
+
+  function enter() {
+    presenting = true;
+    document.body.classList.add('present');
+    btn.textContent = '✕  Exit';
+    /* request fullscreen for clean recording */
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
+  }
+  function exit() {
+    presenting = false;
+    document.body.classList.remove('present');
+    btn.textContent = '⊞  Present';
+    if (document.exitFullscreen && document.fullscreenElement) {
+      document.exitFullscreen().catch(()=>{});
+    }
+  }
+
+  btn.addEventListener('click', () => presenting ? exit() : enter());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'p' || e.key === 'P') presenting ? exit() : enter();
+    if (e.key === 'Escape' && presenting) exit();
+  });
+})();
+
+/* ════════════════════════════════════════════════════
    BOOT
-═══════════════════════════════════════════════ */
+════════════════════════════════════════════════════ */
 window.addEventListener('load', () => {
   buildGraph();
-  for (let i = 0; i < 10; i++) setTimeout(spawn, i * 100);
+  /* stagger-seed: pre-populate edges so animation is full from frame 1 */
+  const startNow = performance.now();
+  edgePts.forEach((ep, i) => {
+    setTimeout(() => {
+      edgeLastSpawn[ep.idx] = startNow;
+      spawnOnEdge(ep.idx);
+    }, i * 70);
+  });
   requestAnimationFrame(tick);
 });
 
 window.addEventListener('resize', () => {
-  particles.forEach(p => p.dot.remove());
+  particles.forEach(p => { p.head.remove(); p.tail.forEach(tc=>tc.remove()); });
   particles.length = 0;
   buildGraph();
 });

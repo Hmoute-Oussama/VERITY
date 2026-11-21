@@ -494,7 +494,15 @@ def execute_guarded(engine: Engine, action: str, *, strict: bool | None = None) 
         argv = shlex.split(action, posix=os.name != "nt")
         if not argv:
             return 2
-        proc = run_command(argv, engine.root, timeout=engine.config.verification.timeout_seconds, shell=False)
+        proc = run_command(
+            argv,
+            engine.root,
+            timeout=engine.config.verification.timeout_seconds,
+            shell=False,
+            sandbox_mode=engine.config.verification.sandbox_mode,
+            sandbox_image=engine.config.verification.sandbox_image,
+            sandbox_allow_network=engine.config.verification.sandbox_allow_network,
+        )
         if proc.stdout:
             print(proc.stdout, end="")
         if proc.stderr:

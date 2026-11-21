@@ -33,6 +33,8 @@ PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "verity"
 SERVER_VERSION = __version__
 API_VERSION = "1.0"
+MAX_ARGUMENT_CHARS = 65536
+MAX_JSON_CHARS = 262144
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
@@ -169,6 +171,8 @@ class McpServer:
 
             if name == "verity_verify_claim":
                 text = str(arguments.get("text") or "")
+                if len(text) > MAX_ARGUMENT_CHARS:
+                    return "Claim text exceeds the 65536-character limit.", True
                 use_diff = arguments.get("use_diff", True)
                 if not text.strip():
                     return "No claim text was provided.", True
@@ -286,6 +290,15 @@ class McpServer:
 
     # ------------------------------------------------------------------ dispatch
     def handle(self, message: dict[str, Any]) -> dict[str, Any] | None:
+        if not isinstance(message, dict):
+            return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request"}}
+        if message.get("jsonrpc") != "2.0":
+            return {"jsonrpc": "2.0", "id": message.get("id"), "error": {"code": -32600, "message": "Invalid Request: jsonrpc must be 2.0"}}
+        try:
+            if len(json.dumps(message, ensure_ascii=False)) > MAX_JSON_CHARS:
+                return {"jsonrpc": "2.0", "id": message.get("id"), "error": {"code": -32600, "message": "Invalid Request: payload too large"}}
+        except (TypeError, ValueError):
+            return {"jsonrpc": "2.0", "id": message.get("id"), "error": {"code": -32600, "message": "Invalid Request"}}
         method = message.get("method")
         msg_id = message.get("id")
         params = message.get("params") or {}
@@ -328,6 +341,12 @@ class McpServer:
             arguments = params.get("arguments") or {}
             if not isinstance(arguments, dict):
                 return err(-32602, "arguments must be an object")
+            try:
+                argument_size = len(json.dumps(arguments, ensure_ascii=False))
+            except (TypeError, ValueError):
+                return err(-32602, "arguments must be JSON-serializable")
+            if argument_size > MAX_ARGUMENT_CHARS:
+                return err(-32602, "arguments exceed the 65536-character limit")
             text, is_error = self.call_tool(str(name), arguments)
             return ok(
                 {
@@ -361,6 +380,8 @@ def _read_message(stream: Any) -> dict[str, Any] | None:
             length = int(stripped.split(b":", 1)[1].strip())
         except ValueError:
             return {}
+        if length > MAX_JSON_CHARS:
+            return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request: payload too large"}}
         while True:
             header = stream.readline()
             if header in (b"\r\n", b"\n", b""):

@@ -53,6 +53,8 @@ class VerificationConfig:
     sandboxed_execution: bool = True
     reproducibility_environment: bool = True
     sandbox_mode: str = "safe-env"
+    sandbox_image: str = "python:3.12-slim"
+    sandbox_allow_network: bool = False
 
 
 @dataclass
@@ -151,6 +153,8 @@ class Config:
                 "sandboxed_execution": self.verification.sandboxed_execution,
                 "reproducibility_environment": self.verification.reproducibility_environment,
                 "sandbox_mode": self.verification.sandbox_mode,
+                "sandbox_image": self.verification.sandbox_image,
+                "sandbox_allow_network": self.verification.sandbox_allow_network,
             },
             "evidence": {
                 "ttl_seconds": self.evidence.ttl_seconds,

@@ -19,6 +19,8 @@
         ,"sandboxed_execution": {"type": "boolean"}
         ,"reproducibility_environment": {"type": "boolean"}
         ,"sandbox_mode": {"type": "string", "enum": ["safe-env", "container", "none"]}
+        ,"sandbox_image": {"type": "string", "minLength": 1}
+        ,"sandbox_allow_network": {"type": "boolean"}
       },
       "additionalProperties": true
     },

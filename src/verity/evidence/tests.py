@@ -133,7 +133,14 @@ class TestExecutionVerifier:
             )
 
         timeout = float(ctx.config.verification.timeout_seconds or 300)
-        result = run_command(configured, ctx.root, timeout=timeout)
+        result = run_command(
+            configured,
+            ctx.root,
+            timeout=timeout,
+            sandbox_mode=ctx.config.verification.sandbox_mode,
+            sandbox_image=ctx.config.verification.sandbox_image,
+            sandbox_allow_network=ctx.config.verification.sandbox_allow_network,
+        )
         output = result.tail(ctx.config.verification.max_output_chars)
         summary_counts = {m.group(2): int(m.group(1)) for m in _PYTEST_SUMMARY.finditer(output)}
         payload = {

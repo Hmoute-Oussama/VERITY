@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -231,6 +232,9 @@ def run_command(
     timeout: float = 300.0,
     env: dict[str, str] | None = None,
     shell: bool | None = None,
+    sandbox_mode: str = "safe-env",
+    sandbox_image: str = "python:3.12-slim",
+    sandbox_allow_network: bool = False,
 ) -> RunResult:
     import time
 
@@ -261,6 +265,29 @@ def run_command(
 
     start = time.monotonic()
     try:
+        if sandbox_mode == "none":
+            pass
+        elif sandbox_mode == "container":
+            if shutil.which("docker") is None:
+                raise RuntimeError("Container sandbox requested but Docker is not available")
+            command_parts = shlex.split(command) if isinstance(command, str) else list(command)
+            docker_args = [
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "none" if not sandbox_allow_network else "bridge",
+                "-v",
+                f"{str(cwd)}:/workspace",
+                "-w",
+                "/workspace",
+                sandbox_image,
+                *command_parts,
+            ]
+            command = docker_args
+            shell = False
+        elif sandbox_mode != "safe-env":
+            raise ValueError(f"Unknown sandbox mode: {sandbox_mode}")
         proc = subprocess.run(
             command,
             cwd=str(cwd),
@@ -292,6 +319,14 @@ def run_command(
         return RunResult(
             command=display,
             returncode=127,
+            stdout="",
+            stderr=str(exc),
+            duration_seconds=round(time.monotonic() - start, 3),
+        )
+    except (RuntimeError, ValueError) as exc:
+        return RunResult(
+            command=display,
+            returncode=126,
             stdout="",
             stderr=str(exc),
             duration_seconds=round(time.monotonic() - start, 3),

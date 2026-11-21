@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from verity.evidence_bundle import canonical_json, export_evidence_bundle, sign_bundle, verify_bundle
+from verity.trust import add_trusted_key, load_trusted_keys, remove_trusted_key
 
 
 def test_evidence_bundle_is_canonical_and_reproducible(engine):
@@ -35,3 +36,12 @@ def test_ed25519_bundle_signature_verifies(engine):
     assert verify_bundle(bundle, public_pem) is True
     bundle["claims"].append({"tampered": True})
     assert verify_bundle(bundle, public_pem) is False
+
+
+def test_local_trust_store_round_trip(engine):
+    public_pem = "-----BEGIN PUBLIC KEY-----\ntest\n-----END PUBLIC KEY-----\n"
+    key_id = add_trusted_key(engine.root, "release", public_pem)
+
+    assert load_trusted_keys(engine.root)[key_id]["name"] == "release"
+    assert remove_trusted_key(engine.root, key_id) is True
+    assert key_id not in load_trusted_keys(engine.root)
