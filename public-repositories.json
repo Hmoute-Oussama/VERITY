@@ -1,0 +1,16 @@
+{
+  "schema": "verity.public-repositories.v1",
+  "repositories": [
+    {"id":"fastapi-auth","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-fastapi-auth"},
+    {"id":"flask-app","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-flask-app"},
+    {"id":"nextjs-app","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-nextjs-app"},
+    {"id":"docker-compose","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-docker-compose"},
+    {"id":"monorepo","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-monorepo"},
+    {"id":"typescript-library","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-typescript-library"},
+    {"id":"java-service","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-java-service"},
+    {"id":"go-service","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-go-service"},
+    {"id":"contradicted-change","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-contradicted-change"},
+    {"id":"stale-evidence","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-stale-evidence"},
+    {"id":"dependency-change","status":"published","url":"https://github.com/Hmoute-Oussama/VERITY-integration-dependency-change"}
+  ]
+}

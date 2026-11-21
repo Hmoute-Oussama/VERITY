@@ -57,3 +57,27 @@ def remove_trusted_key(root: Path, key_id: str) -> bool:
     del keys[key_id]
     path.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return True
+
+
+def revoke_trusted_key(root: Path, key_id: str, reason: str = "") -> bool:
+    path = trust_store(root)
+    if not path.is_file():
+        return False
+    data = json.loads(path.read_text(encoding="utf-8"))
+    keys = data.get("keys") if isinstance(data, dict) else None
+    if not isinstance(keys, dict) or key_id not in keys:
+        return False
+    keys[key_id]["status"] = "revoked"
+    keys[key_id]["revocation_reason"] = reason
+    path.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return True
+
+
+def rotate_trusted_key(
+    root: Path,
+    old_key_id: str,
+    name: str,
+    public_key_pem: str,
+) -> str:
+    revoke_trusted_key(root, old_key_id, "key rotation")
+    return add_trusted_key(root, name, public_key_pem)

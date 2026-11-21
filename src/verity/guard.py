@@ -502,6 +502,9 @@ def execute_guarded(engine: Engine, action: str, *, strict: bool | None = None) 
             sandbox_mode=engine.config.verification.sandbox_mode,
             sandbox_image=engine.config.verification.sandbox_image,
             sandbox_allow_network=engine.config.verification.sandbox_allow_network,
+            sandbox_cpus=engine.config.verification.sandbox_cpus,
+            sandbox_memory=engine.config.verification.sandbox_memory,
+            sandbox_pids=engine.config.verification.sandbox_pids,
         )
         if proc.stdout:
             print(proc.stdout, end="")

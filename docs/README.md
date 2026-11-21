@@ -15,6 +15,7 @@
 - [Agent compatibility](agent-compatibility.md)
 - [Plugin SDK](plugin-sdk.md)
 - [Incident recovery](incident-recovery.md)
+- [Public repositories](public-repositories.md)
 - [MCP integrations](integrations.md)
 - [CI integrations](ci-integrations.md)
 - [Troubleshooting](troubleshooting.md)

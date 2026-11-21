@@ -235,6 +235,9 @@ def run_command(
     sandbox_mode: str = "safe-env",
     sandbox_image: str = "python:3.12-slim",
     sandbox_allow_network: bool = False,
+    sandbox_cpus: str = "1",
+    sandbox_memory: str = "512m",
+    sandbox_pids: int = 128,
 ) -> RunResult:
     import time
 
@@ -275,6 +278,17 @@ def run_command(
                 "docker",
                 "run",
                 "--rm",
+                "--read-only",
+                "--cap-drop",
+                "ALL",
+                "--cpus",
+                sandbox_cpus,
+                "--memory",
+                sandbox_memory,
+                "--pids-limit",
+                str(sandbox_pids),
+                "--tmpfs",
+                "/tmp",
                 "--network",
                 "none" if not sandbox_allow_network else "bridge",
                 "-v",

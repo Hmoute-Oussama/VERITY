@@ -30,3 +30,18 @@ Approved reports should include:
 
 Do not present a CodeQL, Dependabot, or unit-test result as an independent
 security audit.
+
+## Repository status
+
+External audit status is stored in `.verity/security-audits.json` and surfaced
+with:
+
+```bash
+verity evidence-status --json
+```
+
+Record a report only after the auditor and report URL are known:
+
+```bash
+verity evidence-record audit --name "Auditor Name" --version "1.0.0" --commit "<commit>" --url "https://..." --result "retest-passed"
+```

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/plugin-registry.schema.json",
+  "title": "VERITY plugin registry",
+  "type": "object",
+  "required": ["schema", "plugins"],
+  "properties": {
+    "schema": {"const": "verity.plugin-registry.v1"},
+    "plugins": {"type": "array", "items": {"type": "object", "required": ["id", "package", "verifier", "version", "minimum_api", "trust_level", "signature_key_id", "enabled"], "properties": {"id": {"type": "string"}, "package": {"type": "string"}, "verifier": {"type": "string"}, "version": {"type": "string"}, "minimum_api": {"type": "string"}, "trust_level": {"enum": ["community", "verified", "maintainer"]}, "signature_key_id": {"type": "string"}, "enabled": {"type": "boolean"}}}}
+  }
+}

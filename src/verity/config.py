@@ -55,6 +55,9 @@ class VerificationConfig:
     sandbox_mode: str = "safe-env"
     sandbox_image: str = "python:3.12-slim"
     sandbox_allow_network: bool = False
+    sandbox_cpus: str = "1"
+    sandbox_memory: str = "512m"
+    sandbox_pids: int = 128
 
 
 @dataclass
@@ -155,6 +158,9 @@ class Config:
                 "sandbox_mode": self.verification.sandbox_mode,
                 "sandbox_image": self.verification.sandbox_image,
                 "sandbox_allow_network": self.verification.sandbox_allow_network,
+                "sandbox_cpus": self.verification.sandbox_cpus,
+                "sandbox_memory": self.verification.sandbox_memory,
+                "sandbox_pids": self.verification.sandbox_pids,
             },
             "evidence": {
                 "ttl_seconds": self.evidence.ttl_seconds,

@@ -65,6 +65,10 @@ from .output import json_envelope, dumps_versioned, junit_xml, sarif_report
 from .evidence_bundle import verify_bundle, write_evidence_bundle
 from .plugins import discover_plugins
 from .trust import add_trusted_key, load_trusted_keys, remove_trusted_key
+from .trust import revoke_trusted_key, rotate_trusted_key
+from .plugin_registry import load_registry, register_plugin
+from .external_evidence import add_agent_evidence, add_audit_evidence, agent_evidence, audit_evidence
+from .release_evidence import write_release_evidence
 
 app = typer.Typer(
     add_completion=False,
@@ -1285,6 +1289,9 @@ def run(
         sandbox_mode=engine.config.verification.sandbox_mode,
         sandbox_image=engine.config.verification.sandbox_image,
         sandbox_allow_network=engine.config.verification.sandbox_allow_network,
+        sandbox_cpus=engine.config.verification.sandbox_cpus,
+        sandbox_memory=engine.config.verification.sandbox_memory,
+        sandbox_pids=engine.config.verification.sandbox_pids,
     )
     if proc.stdout:
         console.print(proc.stdout, end="")
@@ -1621,10 +1628,11 @@ def verifiers(
 @app.command("trust")
 def trust(
     ctx: typer.Context,
-    action: str = typer.Argument("list", help="list | add | remove"),
+    action: str = typer.Argument("list", help="list | add | remove | revoke | rotate"),
     name: str | None = typer.Option(None, "--name"),
     public_key: Path | None = typer.Option(None, "--public-key"),
     key_id: str | None = typer.Option(None, "--key-id"),
+    reason: str = typer.Option("", "--reason"),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
     """Manage trusted Ed25519 public keys for evidence bundles."""
@@ -1661,8 +1669,171 @@ def trust(
             raise typer.Exit(1)
         console.print(f"[green]removed[/green] {escape(key_id)}")
         return
+    if action == "revoke":
+        if not key_id:
+            err_console.print("[red]--key-id is required.[/red]")
+            raise typer.Exit(2)
+        if not revoke_trusted_key(root, key_id, reason):
+            err_console.print("[red]Trusted key not found.[/red]")
+            raise typer.Exit(1)
+        console.print(f"[green]revoked[/green] {escape(key_id)}")
+        return
+    if action == "rotate":
+        if not key_id or public_key is None or not public_key.is_file():
+            err_console.print("[red]--key-id and --public-key are required.[/red]")
+            raise typer.Exit(2)
+        new_id = rotate_trusted_key(
+            root,
+            key_id,
+            name or public_key.stem,
+            public_key.read_text(encoding="utf-8"),
+        )
+        console.print(f"[green]rotated[/green] {escape(key_id)} -> {escape(new_id)}")
+        return
     err_console.print("[red]Unknown trust action.[/red] Use list, add, or remove.")
     raise typer.Exit(2)
+
+
+@app.command("evidence-status")
+def external_evidence_status(
+    ctx: typer.Context,
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Show third-party audit and live-agent evidence status."""
+    root = _root(ctx)
+    payload = {
+        "security_audits": audit_evidence(root),
+        "live_agent_sessions": agent_evidence(root),
+    }
+    if json_out:
+        console.print_json(json.dumps(payload, indent=2))
+        return
+    console.print("[bold]Security audits[/bold]")
+    if not payload["security_audits"]:
+        console.print("[yellow]Pending — no third-party report is recorded.[/yellow]")
+    for report in payload["security_audits"]:
+        console.print(
+            f"  [{report.get('status', 'pending')}] {escape(str(report.get('auditor') or 'unknown'))} "
+            f"{escape(str(report.get('report_url') or ''))}"
+        )
+    console.print("\n[bold]Live agent sessions[/bold]")
+    if not payload["live_agent_sessions"]:
+        console.print("[yellow]Pending — no live session evidence is recorded.[/yellow]")
+    for agent, session in payload["live_agent_sessions"].items():
+        console.print(f"  {escape(agent)}: {escape(str(session.get('result') or 'pending'))}")
+
+
+@app.command("evidence-record")
+def record_external_evidence(
+    ctx: typer.Context,
+    kind: str = typer.Argument(..., help="audit | agent"),
+    name: str = typer.Option("", "--name"),
+    version: str = typer.Option("", "--version"),
+    os_name: str = typer.Option("", "--os"),
+    verity_version: str = typer.Option("", "--verity-version"),
+    url: str = typer.Option("", "--url"),
+    commit: str = typer.Option("", "--commit"),
+    result: str = typer.Option("pending", "--result"),
+) -> None:
+    """Record external audit or live-agent evidence; it is never auto-inferred."""
+    root = _root(ctx)
+    if kind == "audit":
+        if not name or not version or not url:
+            err_console.print("[red]Audit requires --name, --version, and --url.[/red]")
+            raise typer.Exit(2)
+        add_audit_evidence(root, auditor=name, version=version, report_url=url, status=result, commit=commit)
+        console.print("[green]recorded[/green] external security audit evidence")
+        return
+    if kind == "agent":
+        if not name or not version or not os_name or not verity_version or not url:
+            err_console.print(
+                "[red]Agent evidence requires --name, --version, --os, --verity-version, and --url.[/red]"
+            )
+            raise typer.Exit(2)
+        add_agent_evidence(
+            root,
+            name,
+            version=version,
+            os_name=os_name,
+            verity_version=verity_version,
+            evidence_url=url,
+            result=result,
+        )
+        console.print("[green]recorded[/green] live agent session evidence")
+        return
+    err_console.print("[red]Unknown evidence kind.[/red] Use audit or agent.")
+    raise typer.Exit(2)
+
+
+@app.command("release-evidence")
+def release_evidence(
+    ctx: typer.Context,
+    out: Path = typer.Option("release-evidence.json", "--out", "-o"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Export machine-readable 1.0 release evidence status."""
+    root = _root(ctx)
+    target = write_release_evidence(root, out)
+    if json_out:
+        console.print_json(target.read_text(encoding="utf-8"))
+    else:
+        console.print(f"[green]wrote[/green] {escape(str(target))}")
+
+
+@app.command("plugin-registry")
+def plugin_registry(
+    ctx: typer.Context,
+    action: str = typer.Argument("list", help="list | register"),
+    plugin_id: str = typer.Option("", "--id"),
+    package: str = typer.Option("", "--package"),
+    verifier: str = typer.Option("", "--verifier"),
+    version: str = typer.Option("", "--version"),
+    trust_level: str = typer.Option("community", "--trust"),
+    signature_key_id: str = typer.Option("", "--signature-key"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Manage a local signed/verified community plugin registry."""
+    root = _root(ctx)
+    if action == "register":
+        if not plugin_id or not package or not verifier or not version:
+            err_console.print("[red]Register requires --id, --package, --verifier, and --version.[/red]")
+            raise typer.Exit(2)
+        if trust_level not in {"community", "verified", "maintainer"}:
+            err_console.print("[red]Trust must be community, verified, or maintainer.[/red]")
+            raise typer.Exit(2)
+        entry = register_plugin(
+            root,
+            plugin_id=plugin_id,
+            package=package,
+            verifier=verifier,
+            version=version,
+            trust_level=trust_level,
+            signature_key_id=signature_key_id,
+        )
+        console.print_json(json.dumps(entry, indent=2) if json_out else json.dumps(entry, indent=2))
+        return
+    data = load_registry(root)
+    if json_out:
+        console.print_json(json.dumps(data, indent=2))
+        return
+    if not data["plugins"]:
+        console.print("[bright_black]No plugins are registered locally.[/bright_black]")
+        return
+    table = Table(box=None, pad_edge=False, header_style="bold bright_black")
+    table.add_column("ID", style="cyan")
+    table.add_column("Package")
+    table.add_column("Verifier")
+    table.add_column("Trust")
+    table.add_column("Enabled")
+    for item in data["plugins"]:
+        table.add_row(
+            str(item["id"]),
+            str(item["package"]),
+            str(item["verifier"]),
+            str(item["trust_level"]),
+            "yes" if item["enabled"] else "no",
+        )
+    console.print(table)
 
 
 @app.command("plugins")

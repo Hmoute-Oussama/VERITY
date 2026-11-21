@@ -39,6 +39,9 @@ def _sqlite_url(ctx: VerifyContext) -> Path | None:
     url = ctx.config.database.get("url") or ctx.config.database.get("sqlite_path")
     if not url:
         return None
+    if isinstance(url, str) and not url.startswith("sqlite"):
+        candidate = Path(url)
+        return candidate if candidate.is_absolute() else ctx.root / candidate
     if isinstance(url, str) and url.startswith("sqlite:///"):
         path = url.replace("sqlite:///", "", 1)
         candidate = Path(path)
@@ -253,6 +256,122 @@ class DeploymentConfigVerifier:
             payload={"files": deps},
             deps=deps,
             confidence=0.35,
+        )
+
+
+class ContainerHealthVerifier:
+    name = "container_health"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        compose = str(claim.args.get("compose") or "compose.yaml")
+        service = str(claim.args.get("service") or "")
+        compose_path = ctx.root / compose
+        if not compose_path.is_file():
+            return fail(
+                f"Container configuration `{compose}` does not exist",
+                payload={"compose": compose, "service": service},
+            )
+        try:
+            data = json.loads(read_text(compose_path)) if compose_path.suffix.lower() == ".json" else None
+        except Exception:
+            data = None
+        text = read_text(compose_path)
+        if not re.search(r"(?im)^\s*services\s*:", text) and not (isinstance(data, dict) and data.get("services")):
+            return fail(
+                f"`{compose}` does not declare a services mapping",
+                payload={"compose": compose},
+                deps=[compose],
+            )
+        deps = [compose]
+        if service:
+            if not re.search(rf"(?im)^\s{{2}}{re.escape(service)}\s*:", text):
+                return fail(
+                    f"Container service `{service}` was not found in `{compose}`",
+                    payload={"compose": compose, "service": service},
+                    deps=deps,
+                )
+        return warn(
+            "Container configuration exists, but runtime health was not probed",
+            details="Run a container probe or healthcheck verifier to prove runtime readiness.",
+            payload={"compose": compose, "service": service or None, "runtime_probed": False},
+            deps=deps,
+            confidence=0.5,
+        )
+
+
+class MigrationAppliedVerifier:
+    name = "migration_applied"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        table = str(claim.args.get("table") or "")
+        if not table:
+            return fail("No table was specified")
+        db_path = _sqlite_url(ctx)
+        if db_path is not None and db_path.is_file():
+            schema = _sqlite_schema(db_path, table)
+            match = next((name for name in schema if name.lower() == table.lower()), None)
+            if match:
+                return ok(
+                    f"Table `{table}` exists in the configured SQLite database",
+                    payload={"table": table, "database": relpath(db_path, ctx.root), "applied": True},
+                    deps=[relpath(db_path, ctx.root)],
+                    confidence=1.0,
+                )
+            return fail(
+                f"Table `{table}` was not found in the configured SQLite database",
+                payload={"table": table, "applied": False},
+                deps=[relpath(db_path, ctx.root)],
+            )
+        return warn(
+            "Migration application cannot be confirmed without a live database",
+            details="Configure database.url or database.sqlite_path to inspect applied schema.",
+            payload={"table": table, "applied": False},
+            confidence=0.25,
+        )
+
+
+class CoverageVerifier:
+    name = "coverage"
+
+    def verify(self, claim: Claim, ctx: VerifyContext) -> EvidenceResult:
+        paths = [str(p) for p in (claim.args.get("paths") or claim.args.get("path") or [])]
+        if isinstance(paths, str):
+            paths = [paths]
+        if not paths:
+            paths = ["coverage.json", "coverage.xml", ".coverage"]
+        found = [p for p in paths if (ctx.root / p).is_file()]
+        threshold = float(claim.args.get("threshold") or 0)
+        if not found:
+            return fail(
+                "No coverage report was found",
+                details="Checked: " + ", ".join(paths),
+                payload={"checked": paths, "threshold": threshold},
+            )
+        text = "\n".join(read_text(ctx.root / p) for p in found if (ctx.root / p).is_file())
+        match = re.search(r'"totals"\s*:\s*\{[^}]*"percent_covered"\s*:\s*([0-9.]+)', text)
+        if not match:
+            match = re.search(r'line-rate="([0-9.]+)"', text)
+            percent = float(match.group(1)) * (100 if float(match.group(1)) <= 1 else 1) if match else None
+        else:
+            percent = float(match.group(1))
+        if percent is None:
+            return warn(
+                "Coverage report exists but percentage could not be parsed",
+                payload={"files": found},
+                deps=found,
+                confidence=0.4,
+            )
+        if threshold and percent < threshold:
+            return fail(
+                f"Coverage {percent:.1f}% is below required {threshold:.1f}%",
+                payload={"files": found, "percent": percent, "threshold": threshold},
+                deps=found,
+            )
+        return ok(
+            f"Coverage report records {percent:.1f}%",
+            payload={"files": found, "percent": percent, "threshold": threshold},
+            deps=found,
+            confidence=0.9,
         )
 
 

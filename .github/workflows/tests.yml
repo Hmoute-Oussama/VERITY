@@ -48,6 +48,12 @@ jobs:
       - run: python -m pip install --upgrade build twine
       - run: python -m build
       - run: python -m twine check dist/*
+      - name: Clean wheel install
+        run: |
+          python -m venv .smoke
+          .smoke/bin/python -m pip install --upgrade pip
+          .smoke/bin/python -m pip install dist/*.whl
+          .smoke/bin/verity --version --json
 
   mcp-conformance:
     name: MCP conformance

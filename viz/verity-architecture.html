@@ -24,6 +24,114 @@ body {
   height: 820px;
   position: relative;
   background: #ffffff;
+  /* scale set by JS in present mode */
+  transform-origin: center center;
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+/* ════════════════════════════════
+   PRESENT MODE
+════════════════════════════════ */
+
+/* Present button — bottom-right corner */
+#btn-present {
+  position: fixed;
+  bottom: 22px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 24px;
+  border: 1.5px solid rgba(0,0,0,.13);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.55);
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s, color .15s, box-shadow .15s, opacity .3s;
+}
+#btn-present:hover {
+  background: rgba(0,0,0,.06);
+  color: rgba(0,0,0,.8);
+  box-shadow: 0 4px 18px rgba(0,0,0,.14);
+}
+#btn-present svg {
+  width: 13px; height: 13px; flex-shrink: 0;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+#btn-present .hint {
+  font-size: 8px; opacity: .4; letter-spacing: .5px; margin-left: 2px;
+}
+
+/* Hide enter-button during presentation so recording is clean */
+body.presenting #btn-present {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Exit button — top-right, only visible during presentation */
+#btn-exit {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 1px 8px rgba(0,0,0,.08);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.45);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s, background .15s;
+}
+#btn-exit:hover { background: rgba(0,0,0,.07); color: rgba(0,0,0,.7); }
+#btn-exit svg {
+  width: 11px; height: 11px;
+  stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round;
+}
+body.presenting #btn-exit {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Node-arrival flash ring */
+@keyframes node-flash {
+  0%   { opacity: 0; transform: scale(1); }
+  20%  { opacity: .65; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.node-flash-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+  border: 1.5px solid currentColor;
+  animation: node-flash 0.5s cubic-bezier(.2,0,.4,1) forwards;
+  z-index: 11;
 }
 
 /* ════════════════════════════════
@@ -656,6 +764,19 @@ body.present #present-btn {
 
 </div>
 
+<!-- Present button (bottom-right, always visible) -->
+<button id="btn-present" title="Enter full-screen presentation mode  [P]">
+  <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+  Present
+  <span class="hint">[P]</span>
+</button>
+
+<!-- Exit button (top-right, only visible in present mode) -->
+<button id="btn-exit" title="Exit presentation  [Esc]">
+  <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  Exit
+</button>
+
 <script>
 /* ═══════════════════════════════════════════════════════════════
    VERITY Architecture — Enhanced Animation Engine
@@ -994,37 +1115,59 @@ function tick(now) {
    PRESENTATION MODE
 ════════════════════════════════════════════════════ */
 (function setupPresentationMode() {
-  /* inject button */
-  const btn = document.createElement('button');
-  btn.id = 'present-btn';
-  btn.textContent = '⊞  Present';
-  document.body.appendChild(btn);
-
+  const canvas   = document.getElementById('canvas');
+  const btnEnter = document.getElementById('btn-present');
+  const btnExit  = document.getElementById('btn-exit');
   let presenting = false;
+
+  /* Scale the 1400×820 canvas so it fills the viewport without cropping */
+  function scaleCanvas() {
+    if (!presenting) {
+      canvas.style.transform = '';
+      return;
+    }
+    const scaleX = window.innerWidth  / 1400;
+    const scaleY = window.innerHeight / 820;
+    const scale  = Math.min(scaleX, scaleY) * 0.97; /* 3% breathing room */
+    canvas.style.transform = `scale(${scale.toFixed(4)})`;
+  }
 
   function enter() {
     presenting = true;
-    document.body.classList.add('present');
-    btn.textContent = '✕  Exit';
-    /* request fullscreen for clean recording */
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(()=>{});
-    }
-  }
-  function exit() {
-    presenting = false;
-    document.body.classList.remove('present');
-    btn.textContent = '⊞  Present';
-    if (document.exitFullscreen && document.fullscreenElement) {
-      document.exitFullscreen().catch(()=>{});
-    }
+    document.body.classList.add('presenting');
+    scaleCanvas();
+    /* Trigger browser fullscreen */
+    const el = document.documentElement;
+    if (el.requestFullscreen)            el.requestFullscreen().catch(()=>{});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    /* Rebuild graph after scale so bbox calculations stay accurate */
+    setTimeout(() => { buildGraph(); }, 350);
   }
 
-  btn.addEventListener('click', () => presenting ? exit() : enter());
+  function exit() {
+    presenting = false;
+    document.body.classList.remove('presenting');
+    canvas.style.transform = '';
+    if (document.exitFullscreen && document.fullscreenElement)
+      document.exitFullscreen().catch(()=>{});
+    else if (document.webkitExitFullscreen && document.webkitFullscreenElement)
+      document.webkitExitFullscreen();
+    setTimeout(() => { buildGraph(); }, 350);
+  }
+
+  btnEnter && btnEnter.addEventListener('click', () => enter());
+  btnExit  && btnExit.addEventListener ('click', () => exit());
+
   document.addEventListener('keydown', e => {
     if (e.key === 'p' || e.key === 'P') presenting ? exit() : enter();
     if (e.key === 'Escape' && presenting) exit();
   });
+
+  /* Handle browser-native fullscreen exit (e.g. user pressed Esc natively) */
+  document.addEventListener('fullscreenchange',       () => { if (!document.fullscreenElement       && presenting) exit(); });
+  document.addEventListener('webkitfullscreenchange', () => { if (!document.webkitFullscreenElement && presenting) exit(); });
+
+  window.addEventListener('resize', scaleCanvas);
 })();
 
 /* ════════════════════════════════════════════════════
@@ -1044,7 +1187,7 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('resize', () => {
-  particles.forEach(p => { p.head.remove(); p.tail.forEach(tc=>tc.remove()); });
+  particles.forEach(p => { p.head.remove(); p.tail.forEach(tc => tc.remove()); });
   particles.length = 0;
   buildGraph();
 });

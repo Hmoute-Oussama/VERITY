@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/security-audits.schema.json",
+  "title": "VERITY security audit evidence",
+  "type": "object",
+  "required": ["schema", "reports"],
+  "properties": {
+    "schema": {"const": "verity.security-audits.v1"},
+    "reports": {"type": "array", "items": {"type": "object", "required": ["auditor", "version", "report_url", "status"], "properties": {"auditor": {"type": "string"}, "version": {"type": "string"}, "commit": {"type": "string"}, "report_url": {"type": "string"}, "status": {"enum": ["pending", "accepted", "remediated", "retest-passed"]}}}}
+  }
+}

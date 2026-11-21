@@ -14,6 +14,9 @@ VERIFIER_SPECS = {
     "sbom": {"kind": "security", "args": ["path", "package"], "proof": "CycloneDX or SPDX package representation", "dependencies": "SBOM document"},
     "database_schema": {"kind": "schema", "args": ["table", "columns", "migration"], "proof": "schema declaration or live SQLite structure", "dependencies": "database or source files"},
     "test_execution": {"kind": "test", "args": ["command", "paths"], "proof": "allowlisted command exits successfully", "dependencies": "test and source files"},
+    "container_health": {"kind": "deployment", "args": ["compose", "service"], "proof": "container configuration exists; runtime health requires probe", "dependencies": "Compose file"},
+    "migration_applied": {"kind": "schema", "args": ["table"], "proof": "live configured SQLite table exists", "dependencies": "SQLite database"},
+    "coverage": {"kind": "test", "args": ["paths", "threshold"], "proof": "coverage report meets threshold", "dependencies": "coverage report"},
 }
 
 
@@ -45,6 +48,9 @@ def get_verifier(name: str) -> Verifier:
         "database_schema": runtime.DatabaseSchemaVerifier(),
         "http_probe": runtime.HttpProbeVerifier(),
         "deployment_config": runtime.DeploymentConfigVerifier(),
+        "container_health": runtime.ContainerHealthVerifier(),
+        "migration_applied": runtime.MigrationAppliedVerifier(),
+        "coverage": runtime.CoverageVerifier(),
         "command": runtime.CommandVerifier(),
         "manual": runtime.ManualVerifier(),
         "none": runtime.NoneVerifier(),

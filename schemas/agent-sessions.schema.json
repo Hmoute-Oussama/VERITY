@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/agent-sessions.schema.json",
+  "title": "VERITY live agent session evidence",
+  "type": "object",
+  "required": ["schema", "sessions"],
+  "properties": {
+    "schema": {"const": "verity.agent-sessions.v1"},
+    "sessions": {"type": "object", "additionalProperties": {"type": "object", "required": ["agent", "agent_version", "os", "verity_version", "evidence_url", "result"], "properties": {"agent": {"type": "string"}, "agent_version": {"type": "string"}, "os": {"type": "string"}, "verity_version": {"type": "string"}, "evidence_url": {"type": "string"}, "result": {"enum": ["pending", "passed", "failed"]}}}}
+  }
+}

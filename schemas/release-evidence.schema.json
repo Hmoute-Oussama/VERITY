@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/release-evidence.schema.json",
+  "title": "VERITY public release evidence",
+  "type": "object",
+  "required": ["schema", "version", "repository", "external_security_audit", "live_agent_sessions", "cross_platform_ci", "package"],
+  "properties": {
+    "schema": {"const": "verity.release-evidence.v1"},
+    "version": {"type": "string"},
+    "repository": {"type": "string"},
+    "external_security_audit": {"type": "object"},
+    "live_agent_sessions": {"type": "object"},
+    "cross_platform_ci": {"type": "object"},
+    "package": {"type": "object"}
+  }
+}

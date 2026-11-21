@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from verity.evidence_bundle import canonical_json, export_evidence_bundle, sign_bundle, verify_bundle
-from verity.trust import add_trusted_key, load_trusted_keys, remove_trusted_key
+from verity.trust import add_trusted_key, load_trusted_keys, remove_trusted_key, revoke_trusted_key, rotate_trusted_key
 
 
 def test_evidence_bundle_is_canonical_and_reproducible(engine):
@@ -45,3 +45,13 @@ def test_local_trust_store_round_trip(engine):
     assert load_trusted_keys(engine.root)[key_id]["name"] == "release"
     assert remove_trusted_key(engine.root, key_id) is True
     assert key_id not in load_trusted_keys(engine.root)
+
+
+def test_trust_store_revoke_and_rotate(engine):
+    old_id = add_trusted_key(engine.root, "old", "old-public-key")
+    assert revoke_trusted_key(engine.root, old_id, "compromised") is True
+    assert load_trusted_keys(engine.root)[old_id]["status"] == "revoked"
+
+    new_id = rotate_trusted_key(engine.root, old_id, "new", "new-public-key")
+    assert new_id != old_id
+    assert load_trusted_keys(engine.root)[new_id]["status"] == "trusted"

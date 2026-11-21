@@ -23,5 +23,7 @@
 | OpenCode | MCP | supported |
 | Cursor | MCP | supported |
 | VS Code / Copilot | MCP | supported |
-| Windsurf | MCP | beta |
-| Gemini CLI | MCP | beta |
+| Windsurf | MCP | pending live-session evidence |
+| Gemini CLI | MCP | pending live-session evidence |
+
+Statuses marked `pending live-session evidence` are not community compatibility claims.

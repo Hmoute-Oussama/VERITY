@@ -21,6 +21,9 @@
         ,"sandbox_mode": {"type": "string", "enum": ["safe-env", "container", "none"]}
         ,"sandbox_image": {"type": "string", "minLength": 1}
         ,"sandbox_allow_network": {"type": "boolean"}
+        ,"sandbox_cpus": {"type": "string", "minLength": 1}
+        ,"sandbox_memory": {"type": "string", "minLength": 1}
+        ,"sandbox_pids": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": true
     },

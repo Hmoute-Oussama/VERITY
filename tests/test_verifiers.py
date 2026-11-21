@@ -290,6 +290,37 @@ def test_sbom_spdx_package(engine):
     assert run(engine, "sbom", path="sbom.spdx.json", package="react").status.value == "pass"
 
 
+def test_container_health_requires_service(engine):
+    (engine.root / "compose.yaml").write_text(
+        "services:\n  api:\n    image: example/api:1.0\n"
+    )
+    result = run(engine, "container_health", compose="compose.yaml", service="api")
+    assert result.status.value == "warn"
+    assert "runtime health was not probed" in result.summary
+
+
+def test_migration_applied_checks_live_database(engine):
+    import sqlite3
+
+    db = engine.root / "state.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE users (id INTEGER)")
+    conn.commit()
+    conn.close()
+    engine.config.database = {"sqlite_path": "state.db"}
+    result = run(engine, "migration_applied", table="users")
+    assert result.status.value == "pass"
+    assert result.payload["applied"] is True
+
+
+def test_coverage_threshold(engine):
+    (engine.root / "coverage.json").write_text(
+        '{"totals":{"percent_covered":92.5}}'
+    )
+    assert run(engine, "coverage", threshold=90).status.value == "pass"
+    assert run(engine, "coverage", threshold=95).status.value == "fail"
+
+
 def test_deployment_config_detects_compose(engine):
     (engine.root / "compose.yaml").write_text(
         "services:\n  api:\n    image: example/api:1.0\n"
