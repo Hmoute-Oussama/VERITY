@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/mcp.schema.json",
+  "title": "VERITY MCP catalog v1",
+  "type": "object",
+  "required": ["tools", "resources", "api_version"],
+  "properties": {
+    "api_version": {"type": "string", "const": "1.0"},
+    "tools": {"type": "array", "items": {"type": "object", "required": ["name", "description", "inputSchema"], "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "inputSchema": {"type": "object"}}}},
+    "resources": {"type": "array", "items": {"type": "object", "required": ["uri", "name", "description", "mimeType"], "properties": {"uri": {"type": "string"}, "name": {"type": "string"}, "description": {"type": "string"}, "mimeType": {"type": "string"}}}}
+  },
+  "additionalProperties": false
+}

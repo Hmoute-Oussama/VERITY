@@ -50,6 +50,28 @@ def test_events_are_recorded(engine):
     assert events[0]["payload"] == {"answer": 42}
 
 
+def test_database_records_current_schema_version(engine):
+    assert engine.repo.schema_version == 1
+    assert engine.repo._query(
+        "SELECT value FROM meta WHERE key = 'db_schema_version'"
+    )[0]["value"] == "1"
+
+
+def test_database_rejects_newer_schema_version(project):
+    from verity.db import Repository
+
+    repo = Repository(project / ".verity" / "verity.db", "test-project")
+    repo.set_meta("db_schema_version", "999")
+    repo.close()
+
+    try:
+        Repository(project / ".verity" / "verity.db", "test-project")
+    except RuntimeError as exc:
+        assert "newer than supported" in str(exc)
+    else:
+        raise AssertionError("A newer database schema must be rejected")
+
+
 def test_delete_claim(engine):
     claim = engine.repo.upsert_claim(ClaimDraft(text="x", verifier="none"))
 

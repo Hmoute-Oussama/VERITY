@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/snapshot.schema.json",
+  "title": "VERITY agent snapshot v1",
+  "type": "object",
+  "required": ["project", "commit", "branch", "overall", "counts", "contracts", "verified", "unverified", "contradicted"],
+  "properties": {
+    "project": {"type": "string"},
+    "commit": {"type": ["string", "null"]},
+    "branch": {"type": ["string", "null"]},
+    "overall": {"type": "string"},
+    "counts": {"type": "object"},
+    "contracts": {"type": "object", "required": ["satisfied", "total"]},
+    "verified": {"type": "array"},
+    "unverified": {"type": "array"},
+    "contradicted": {"type": "array"}
+  },
+  "additionalProperties": true
+}

@@ -13,6 +13,10 @@ Semantic Versioning.
 - Cross-platform CI and release workflows.
 - README project telemetry and animated visual assets.
 - JSON schemas for VERITY configuration and evidence contracts.
+- Versioned status, evidence, snapshot, graph, and MCP JSON schemas.
+- Machine-readable API version metadata.
+- Database schema migration tracking and forward-migration safeguards.
+- 1.0 compatibility and database migration documentation.
 
 ## [0.2.0] - 2026-11-21
 

@@ -84,6 +84,39 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
 """
 
+DB_SCHEMA_VERSION = 1
+
+
+def migrate_repository(repo: "Repository") -> int:
+    """Apply forward-only SQLite migrations and record the schema version."""
+    repo._execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+    rows = repo._query("SELECT value FROM meta WHERE key = 'db_schema_version'")
+    if not rows:
+        repo.set_meta("db_schema_version", str(DB_SCHEMA_VERSION))
+        return DB_SCHEMA_VERSION
+    try:
+        current = int(rows[0]["value"])
+    except (TypeError, ValueError):
+        raise RuntimeError("VERITY evidence database has an invalid db_schema_version")
+    if current > DB_SCHEMA_VERSION:
+        repo.close()
+        raise RuntimeError(
+            f"Evidence database schema {current} is newer than supported schema "
+            f"{DB_SCHEMA_VERSION}; upgrade VERITY"
+        )
+    if current < DB_SCHEMA_VERSION:
+        for version in range(current + 1, DB_SCHEMA_VERSION + 1):
+            _apply_migration(repo, version)
+        repo.set_meta("db_schema_version", str(DB_SCHEMA_VERSION))
+    return DB_SCHEMA_VERSION
+
+
+def _apply_migration(repo: "Repository", version: int) -> None:
+    if version == 1:
+        repo._execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+        return
+    raise RuntimeError(f"No migration implementation exists for database schema {version}")
+
 
 class Repository:
     """Thin, explicit repository over one SQLite database."""
@@ -98,6 +131,17 @@ class Repository:
         with self._lock:
             self._conn.executescript(SCHEMA)
             self._conn.commit()
+        migrate_repository(self)
+
+    @property
+    def schema_version(self) -> int:
+        rows = self._query("SELECT value FROM meta WHERE key = 'db_schema_version'")
+        if not rows:
+            return 0
+        try:
+            return int(rows[0]["value"])
+        except (TypeError, ValueError):
+            return 0
 
     # ------------------------------------------------------------------ lifecycle
     def close(self) -> None:

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/graph.schema.json",
+  "title": "VERITY evidence graph v1",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {"type": "array", "items": {"type": "object", "required": ["id", "type", "label", "status", "meta"], "properties": {"id": {"type": "string"}, "type": {"type": "string"}, "label": {"type": "string"}, "status": {"type": "string"}, "meta": {"type": "object"}}}},
+    "edges": {"type": "array", "items": {"type": "object", "required": ["source", "target", "relation"], "properties": {"source": {"type": "string"}, "target": {"type": "string"}, "relation": {"type": "string"}}}}
+  },
+  "additionalProperties": false
+}

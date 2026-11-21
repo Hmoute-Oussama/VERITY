@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/status.schema.json",
+  "title": "VERITY status v1",
+  "type": "object",
+  "required": ["project", "commit", "branch", "counts", "claims", "evidence", "invalidations", "contracts", "overall"],
+  "properties": {
+    "project": {"type": "string"},
+    "commit": {"type": ["string", "null"]},
+    "branch": {"type": ["string", "null"]},
+    "counts": {"type": "object"},
+    "claims": {"type": "array"},
+    "evidence": {"type": "array"},
+    "invalidations": {"type": "array"},
+    "contracts": {"type": "object", "required": ["met", "total"], "properties": {"met": {"type": "integer"}, "total": {"type": "integer"}}},
+    "overall": {"type": "string", "enum": ["verified", "incomplete", "contradicted", "stale", "no-claims"]}
+  },
+  "additionalProperties": true
+}

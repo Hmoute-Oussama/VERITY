@@ -28,7 +28,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from . import __tagline__, __version__
+from . import API_VERSION, CONTRACT_SCHEMA_VERSION, DB_SCHEMA_VERSION, __tagline__, __version__
 from .claims.extractor import extract_from_text
 from .config import (
     CONTRACTS_FILE,
@@ -109,8 +109,23 @@ def _main(
         None, "--root", "-C", help="Project root (defaults to the nearest .verity directory)."
     ),
     version: bool = typer.Option(False, "--version", help="Show version and exit."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON for --version."),
 ) -> None:
     if version:
+        if json_out:
+            console.print_json(
+                json.dumps(
+                    {
+                        "name": "verity",
+                        "version": __version__,
+                        "api_version": API_VERSION,
+                        "contract_schema_version": CONTRACT_SCHEMA_VERSION,
+                        "db_schema_version": DB_SCHEMA_VERSION,
+                    },
+                    indent=2,
+                )
+            )
+            raise typer.Exit(0)
         console.print(f"VERITY {__version__} — {__tagline__}")
         raise typer.Exit(0)
     ctx.obj = {"root": Path(root).resolve() if root else find_project_root()}

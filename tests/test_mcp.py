@@ -19,6 +19,17 @@ def test_tool_catalog_exposes_the_reality_surface():
     }
 
 
+def test_initialize_reports_stable_api_version(project):
+    server = McpServer(project)
+    try:
+        response = server.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+    finally:
+        server.engine.repo.close()
+
+    assert response["result"]["serverInfo"]["name"] == "verity"
+    assert response["result"]["serverInfo"]["api_version"] == "1.0"
+
+
 def test_check_action_blocks_missing_script(project):
     server = McpServer(project)
     try:

@@ -398,6 +398,22 @@ pytest
 
 Python 3.10+; dependencies are Typer, Rich, and PyYAML.
 
+## API stability
+
+VERITY documents its beta-to-1.0 compatibility baseline:
+
+- [1.0 compatibility contract](docs/api-stability.md)
+- [Database migration guide](docs/migration-guide.md)
+- [Versioned JSON schemas](schemas/)
+- Stable CLI exit codes: `0` success, `1` verification failure, `2` blocked or invalid input
+- MCP API version `1.0`
+
+Machine-readable version metadata:
+
+```bash
+verity --version --json
+```
+
 ## Roadmap
 
 - ~~GitHub Action and pull-request evidence comments~~ (beta workflows included)

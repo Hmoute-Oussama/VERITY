@@ -32,6 +32,7 @@ from ..util import truncate
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "verity"
 SERVER_VERSION = __version__
+API_VERSION = "1.0"
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
@@ -305,7 +306,11 @@ class McpServer:
                 {
                     "protocolVersion": PROTOCOL_VERSION,
                     "capabilities": {"tools": {}, "resources": {}},
-                    "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
+                    "serverInfo": {
+                        "name": SERVER_NAME,
+                        "version": SERVER_VERSION,
+                        "api_version": API_VERSION,
+                    },
                     "instructions": (
                         "VERITY is the reality layer for coding agents. "
                         "Call verity_reality before planning, verity_check_action before risky "

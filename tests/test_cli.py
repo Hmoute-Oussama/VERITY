@@ -10,6 +10,17 @@ from verity.cli import app
 runner = CliRunner()
 
 
+def test_version_json_exposes_stable_api_versions():
+    result = runner.invoke(app, ["--version", "--json"])
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output["name"] == "verity"
+    assert output["api_version"] == "1.0"
+    assert output["contract_schema_version"] == 1
+    assert output["db_schema_version"] == 1
+
+
 def test_validate_accepts_initialized_project(project: Path):
     from verity.config import scaffold_config
     from verity.contracts import scaffold_contracts
