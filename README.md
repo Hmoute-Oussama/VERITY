@@ -111,9 +111,9 @@ Result: completion is not justified.
 From PyPI when published:
 
 ```bash
-pipx install verity-cli
+pipx install verity-evidence
 # or
-python -m pip install verity-cli
+python -m pip install verity-evidence
 ```
 
 From source:

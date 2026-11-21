@@ -21,6 +21,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
+from .. import __version__
 from ..contracts import check_contracts, load_contracts
 from ..engine import Engine
 from ..guard import check_action, scan_assumptions
@@ -30,7 +31,7 @@ from ..util import truncate
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "verity"
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = __version__
 
 
 def _tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:

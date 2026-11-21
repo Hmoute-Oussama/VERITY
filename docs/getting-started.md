@@ -5,7 +5,7 @@
 Preview PyPI installation:
 
 ```bash
-pipx install verity-cli
+pipx install verity-evidence
 ```
 
 Development checkout:

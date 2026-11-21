@@ -14,6 +14,15 @@ Semantic Versioning.
 - README project telemetry and animated visual assets.
 - JSON schemas for VERITY configuration and evidence contracts.
 
+## [0.2.0] - 2026-11-21
+
+### Added
+
+- `verity-evidence` PyPI distribution name.
+- First beta package metadata and trusted-Publishing release workflow.
+- Configuration and contract validation commands.
+- Cross-platform test matrix and package build workflow.
+
 ## [0.1.0] - 2026-11-21
 
 ### Added
