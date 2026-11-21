@@ -1,0 +1,83 @@
+name: Update README pulse
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-pulse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update project pulse
+        shell: bash
+        run: |
+          python <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import re
+          import subprocess
+
+          root = Path(".")
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          commits = git("rev-list", "--count", "HEAD")
+          latest = git("log", "-1", "--format=%h · %cs")
+          branch = git("branch", "--show-current") or "main"
+          test_files = len(list((root / "tests").glob("test_*.py")))
+          python_files = len(list((root / "src").rglob("*.py")))
+
+          registry = root / "src/verity/evidence/registry.py"
+          verifiers = len(re.findall(r'^\s+"[^"]+":', registry.read_text(encoding="utf-8"), re.M)) if registry.exists() else 0
+          refreshed = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+          block = (
+              "<!-- PROJECT-PULSE:START -->\n"
+              "## Project pulse\n\n"
+              "```text\n"
+              f"Commits       {commits:>6}\n"
+              f"Python files  {python_files:>6}\n"
+              f"Test modules  {test_files:>6}\n"
+              f"Verifiers     {verifiers:>6}\n"
+              "```\n\n"
+              f"**Branch:** `{branch}` · **Latest:** `{latest}` · **Pulse:** `{refreshed}`\n"
+              "<!-- PROJECT-PULSE:END -->"
+          )
+
+          readme = root / "README.md"
+          text = readme.read_text(encoding="utf-8")
+          pattern = r"<!-- PROJECT-PULSE:START -->.*<!-- PROJECT-PULSE:END -->"
+          if re.search(pattern, text, re.S):
+              text = re.sub(pattern, block, text, flags=re.S)
+              readme.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Commit only if README changed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "README pulse is already current"
+            exit 0
+          fi
+          git diff --cached --stat
+          git commit -m "docs: update project pulse"
+          git push
