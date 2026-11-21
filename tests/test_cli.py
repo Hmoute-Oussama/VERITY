@@ -1,0 +1,99 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from verity.cli import app
+
+runner = CliRunner()
+
+
+def test_integrate_lists_supported_agents():
+    result = runner.invoke(app, ["integrate", "--list"])
+
+    assert result.exit_code == 0
+    for name in ("claude", "codex", "opencode", "cursor", "vscode"):
+        assert name in result.stdout
+
+
+def test_integrate_writes_agent_config(project: Path):
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "integrate", "claude", "--python", "--no-instructions"],
+    )
+
+    assert result.exit_code == 0
+    data = json.loads((project / ".mcp.json").read_text(encoding="utf-8"))
+    assert "verity" in data["mcpServers"]
+
+
+def test_hook_guard_denies_missing_script(project: Path):
+    payload = {"tool_name": "Bash", "tool_input": {"command": "python missing_script.py"}}
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "hook", "guard"],
+        input=json.dumps(payload),
+    )
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "missing_script.py" in output["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def test_hook_guard_warns_but_does_not_block(project: Path):
+    payload = {"tool_name": "Bash", "tool_input": {"command": "pytest missing_tests"}}
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "hook", "guard"],
+        input=json.dumps(payload),
+    )
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert "systemMessage" in output
+
+
+def test_hook_guard_allows_safe_command(project: Path):
+    payload = {"tool_name": "Bash", "tool_input": {"command": "echo hello"}}
+    result = runner.invoke(
+        app,
+        ["-C", str(project), "hook", "guard"],
+        input=json.dumps(payload),
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout.strip() == ""
+
+
+def test_hook_guard_json_mode_exits_nonzero_on_block(project: Path):
+    result = runner.invoke(
+        app,
+        [
+            "-C",
+            str(project),
+            "hook",
+            "guard",
+            "--command",
+            "python missing_script.py",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 2
+    output = json.loads(result.stdout)
+    assert output["verdict"] == "block"
+
+
+def test_hook_guard_ignores_uninitialized_project(tmp_path: Path):
+    payload = {"tool_name": "Bash", "tool_input": {"command": "python missing_script.py"}}
+    result = runner.invoke(
+        app,
+        ["-C", str(tmp_path), "hook", "guard"],
+        input=json.dumps(payload),
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout.strip() == ""

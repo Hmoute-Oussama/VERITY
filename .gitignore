@@ -1,0 +1,27 @@
+# VERITY runtime state (evidence is local; contracts are meant to be committed)
+.verity/*.db
+.verity/*.db-wal
+.verity/*.db-shm
+.verity/snapshot.md
+.verity/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

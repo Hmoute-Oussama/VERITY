@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VERITY — The Reality Layer</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #111821;
+    --panel-2: #0e151d;
+    --border: #1f2a37;
+    --text: #d7e2ee;
+    --muted: #7d8fa3;
+    --dim: #526173;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --purple: #a371f7;
+    --blue: #58a6ff;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 70% -10%, #122033 0%, var(--bg) 55%);
+    color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; gap: 18px; padding: 18px 28px;
+    border-bottom: 1px solid var(--border); background: rgba(9, 13, 18, .8);
+    position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px);
+  }
+  .logo { font-weight: 800; letter-spacing: .22em; font-size: 17px; }
+  .logo span { color: var(--green); }
+  .tagline { color: var(--muted); font-size: 12px; border-left: 1px solid var(--border); padding-left: 16px; }
+  .spacer { flex: 1; }
+  .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+  main { max-width: 1440px; margin: 0 auto; padding: 24px 28px 60px; }
+  button {
+    background: #16202c; color: var(--text); border: 1px solid var(--border);
+    padding: 7px 12px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600;
+  }
+  button:hover { border-color: #33475e; background: #1a2735; }
+  button.primary { background: #12351f; border-color: #1f6f36; color: #7ee787; }
+  button.primary:hover { background: #17452a; }
+  button.danger { background: #331414; border-color: #6e2424; color: #ff9c96; }
+  .overall {
+    display: flex; align-items: center; gap: 22px; padding: 20px 24px;
+    border: 1px solid var(--border); border-radius: 14px; margin-bottom: 18px;
+    background: linear-gradient(120deg, var(--panel) 0%, var(--panel-2) 100%);
+  }
+  .overall .big { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+  .overall .sub { color: var(--muted); font-size: 12px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px; }
+  .stat .n { font-size: 26px; font-weight: 750; font-family: var(--mono); }
+  .stat .l { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; margin-top: 2px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 13px; overflow: hidden; }
+  .panel + .panel { margin-top: 18px; }
+  .panel-head {
+    display: flex; align-items: center; gap: 10px; padding: 13px 16px;
+    border-bottom: 1px solid var(--border); font-weight: 700; font-size: 12px;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  }
+  .panel-body { padding: 14px 16px; }
+  .filters { margin-left: auto; display: flex; gap: 5px; flex-wrap: wrap; }
+  .filters button { padding: 4px 9px; font-size: 11px; font-weight: 500; }
+  .filters button.active { border-color: #3a5a7d; color: #cfe8ff; background: #152538; }
+  .claim { border-bottom: 1px solid #17212c; padding: 12px 16px; cursor: pointer; }
+  .claim:last-child { border-bottom: 0; }
+  .claim:hover { background: #131c26; }
+  .claim-row { display: flex; gap: 12px; align-items: flex-start; }
+  .chip {
+    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    padding: 2px 7px; border-radius: 5px; white-space: nowrap; text-transform: uppercase;
+    border: 1px solid transparent; margin-top: 2px;
+  }
+  .verified { color: #7ee787; background: #0f2d1a; border-color: #1d5b31; }
+  .partially_verified { color: #e3b341; background: #2c2209; border-color: #6b5312; }
+  .unverified { color: #9aa8b7; background: #1a222c; border-color: #2c3a4a; }
+  .contradicted { color: #ff9c96; background: #331313; border-color: #6e2424; }
+  .stale { color: #d2b6ff; background: #251436; border-color: #4b2a6e; }
+  .claim-text { flex: 1; min-width: 0; }
+  .claim-text .t { font-weight: 600; }
+  .claim-text .m { color: var(--dim); font-family: var(--mono); font-size: 11px; margin-top: 3px; }
+  .evidence { margin: 10px 0 0 0; padding: 10px 12px; background: #0b121a; border: 1px solid #17212c; border-radius: 8px; }
+  .evidence .e { display: flex; gap: 9px; font-size: 12px; padding: 4px 0; align-items: flex-start; }
+  .evidence .e .s { font-family: var(--mono); font-size: 10px; min-width: 42px; font-weight: 700; }
+  .pass { color: var(--green); } .warn { color: var(--amber); } .fail { color: var(--red); }
+  .error { color: var(--red); } .stale-s { color: var(--purple); }
+  .muted { color: var(--muted); } .dim { color: var(--dim); }
+  .empty { padding: 26px 16px; color: var(--dim); text-align: center; }
+  .contract { padding: 10px 0; border-bottom: 1px solid #17212c; }
+  .contract:last-child { border-bottom: 0; }
+  .contract .top { display: flex; gap: 8px; align-items: center; }
+  .contract .id { font-family: var(--mono); font-size: 11px; color: var(--blue); }
+  .contract .desc { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .bar { height: 6px; background: #1a232e; border-radius: 4px; overflow: hidden; margin: 9px 0 3px; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, #2ea043, #56d364); }
+  .guard input {
+    width: 100%; background: #0a1017; color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 11px; font-family: var(--mono); font-size: 12px;
+  }
+  .guard input:focus { outline: none; border-color: #33506d; }
+  .verdict { margin-top: 11px; border-radius: 9px; padding: 11px 12px; font-size: 12px; border: 1px solid; }
+  .verdict.allow { background: #0e2417; border-color: #1d5b31; color: #8fe3a1; }
+  .verdict.warn { background: #2a210c; border-color: #6b5312; color: #e9c46a; }
+  .verdict.block { background: #2c1111; border-color: #6e2424; color: #ff9c96; }
+  .verdict ul { margin: 7px 0 0 0; padding-left: 17px; }
+  .graph { font-family: var(--mono); font-size: 12px; }
+  .gnode { padding: 8px 0; border-bottom: 1px solid #17212c; }
+  .gnode:last-child { border-bottom: 0; }
+  .gsub { color: var(--dim); padding-left: 20px; font-size: 11px; }
+  .gsub .art { color: #5f7288; }
+  .toast {
+    position: fixed; right: 22px; bottom: 22px; background: #16202c; border: 1px solid #33506d;
+    color: var(--text); padding: 11px 16px; border-radius: 9px; font-size: 12px; opacity: 0;
+    transform: translateY(8px); transition: .2s; pointer-events: none; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } header { flex-wrap: wrap; } .tagline { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">VERITY<span>.</span></div>
+  <div class="tagline">No claim without evidence. No action without reality.</div>
+  <div class="spacer"></div>
+  <div class="meta" id="meta">loading…</div>
+  <button id="refresh">Refresh</button>
+  <button class="primary" id="verify-all">Re-verify all</button>
+</header>
+
+<main>
+  <section class="overall">
+    <span class="dot" id="overall-dot" style="background:#526173"></span>
+    <div>
+      <div class="big" id="overall-title">Loading</div>
+      <div class="sub" id="overall-sub">Reading the evidence graph…</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="meta" id="contracts-meta"></div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="panel-head">
+          Claims
+          <div class="filters" id="filters">
+            <button data-filter="all" class="active">All</button>
+            <button data-filter="verified">Verified</button>
+            <button data-filter="partially_verified">Partial</button>
+            <button data-filter="unverified">Unverified</button>
+            <button data-filter="contradicted">Contradicted</button>
+            <button data-filter="stale">Stale</button>
+          </div>
+        </div>
+        <div id="claims"><div class="empty">Loading claims…</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">Evidence graph <span class="muted" style="margin-left:auto;text-transform:none;letter-spacing:0">claim → evidence → artifact</span></div>
+        <div class="panel-body graph" id="graph"></div>
+      </section>
+    </div>
+
+    <aside>
+      <section class="panel">
+        <div class="panel-head">Evidence contracts
+          <button id="check-contracts" style="margin-left:auto">Check</button>
+        </div>
+        <div class="panel-body" id="contracts"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">Hallucination firewall</div>
+        <div class="panel-body guard">
+          <input id="guard-input" placeholder="docker compose up --build" spellcheck="false" />
+          <div style="display:flex;gap:8px;margin-top:9px">
+            <button id="guard-check" style="flex:1">Check action</button>
+            <button id="guard-strict" title="Block on any unmet prerequisite">Strict</button>
+          </div>
+          <div id="guard-result"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">Invalidated evidence</div>
+        <div class="panel-body" id="invalidated"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">Agent reality context</div>
+        <div class="panel-body">
+          <div class="dim" style="font-size:12px;margin-bottom:8px">The compact snapshot injected into agents over MCP.</div>
+          <button id="copy-context" style="width:100%">Copy compact snapshot</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const state = { data: null, filter: "all", expanded: new Set(), strict: false };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const OVERALL = {
+  verified: ["Verified", "#3fb950", "All required claims have current, passing evidence."],
+  incomplete: ["Incomplete", "#d29922", "Some claims still lack conclusive evidence."],
+  contradicted: ["Contradicted", "#f85149", "Evidence contradicts at least one claim."],
+  stale: ["Stale evidence", "#a371f7", "Reality changed; evidence must be refreshed."],
+  "no-claims": ["No claims", "#526173", "Analyze an agent statement or define contracts to begin."],
+};
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(window.__toast); window.__toast = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function stat(label, value, color) {
+  return `<div class="stat"><div class="n" style="color:${color}">${value}</div><div class="l">${label}</div></div>`;
+}
+
+function render() {
+  const d = state.data; if (!d) return;
+  const o = OVERALL[d.overall] || OVERALL.incomplete;
+  $("overall-title").textContent = o[0];
+  $("overall-title").style.color = o[1];
+  $("overall-dot").style.background = o[1];
+  $("overall-sub").textContent = o[2];
+  $("meta").innerHTML = `${esc(d.project)}<br><span class="dim">${esc((d.commit || "no commit").slice(0, 10))}${d.branch ? " · " + esc(d.branch) : ""}</span>`;
+  $("contracts-meta").innerHTML = d.contracts.total
+    ? `Contracts<br><span style="color:${d.contracts.met === d.contracts.total ? "var(--green)" : "var(--amber)"}">${d.contracts.met}/${d.contracts.total} satisfied</span>`
+    : `Contracts<br><span class="dim">none defined</span>`;
+
+  const c = d.counts || {};
+  $("stats").innerHTML =
+    stat("Verified", c.verified || 0, "var(--green)") +
+    stat("Partial", c.partially_verified || 0, "var(--amber)") +
+    stat("Unverified", c.unverified || 0, "var(--muted)") +
+    stat("Contradicted", c.contradicted || 0, "var(--red)") +
+    stat("Stale", c.stale || 0, "var(--purple)") +
+    stat("Invalidated evidence", d.evidence.invalidated || 0, "var(--blue)");
+
+  renderClaims();
+  renderInvalidated();
+  renderGraph();
+  renderContracts();
+}
+
+function renderClaims() {
+  const claims = (state.data.claims || []).filter(c => state.filter === "all" || c.status === state.filter);
+  if (!claims.length) {
+    $("claims").innerHTML = `<div class="empty">No ${state.filter === "all" ? "" : state.filter.replace("_"," ") + " "}claims.</div>`;
+    return;
+  }
+  $("claims").innerHTML = claims.map(claim => {
+    const open = state.expanded.has(claim.id);
+    const evidence = (claim.evidence || []).map(e => `
+      <div class="e">
+        <span class="s ${e.status}">${esc(e.status.toUpperCase())}</span>
+        <span>${esc(e.summary)}${e.valid ? "" : ` <span class="stale-s">(invalidated: ${esc(e.invalidated_reason || "reality changed")})</span>`}
+        ${e.dependencies && e.dependencies.length ? `<div class="dim" style="font-size:11px;margin-top:2px">tracks ${e.dependencies.slice(0,4).map(esc).join(", ")}${e.dependencies.length>4?" …":""}</div>` : ""}
+        </span>
+      </div>`).join("");
+    return `<div class="claim" data-id="${claim.id}">
+      <div class="claim-row">
+        <span class="chip ${claim.status}">${esc(claim.status.replace("_"," "))}</span>
+        <div class="claim-text">
+          <div class="t">${esc(claim.text)}</div>
+          <div class="m">${esc(claim.verifier)} · ${esc(claim.source)}${claim.contract ? " · contract:" + esc(claim.contract) : ""}${claim.required ? " · required" : ""}</div>
+        </div>
+      </div>
+      ${open ? `<div class="evidence">${evidence || '<div class="dim">No evidence yet. Run verification.</div>'}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderInvalidated() {
+  const list = state.data.invalidations || [];
+  $("invalidated").innerHTML = list.length
+    ? list.map(i => `<div class="contract"><div class="top"><span class="chip stale">stale</span><span class="id">${esc(i.verifier)}</span></div><div class="desc">${esc(i.reason || "invalidated")}</div></div>`).join("")
+    : `<div class="dim" style="font-size:12px">No invalidated evidence. The graph is current.</div>`;
+}
+
+function renderContracts() {
+  const total = state.data.contracts.total;
+  const met = state.data.contracts.met;
+  if (!total) {
+    $("contracts").innerHTML = `<div class="dim" style="font-size:12px">No contracts defined.<br><br><code style="color:var(--blue)">verity contract init</code></div>`;
+    return;
+  }
+  const pct = Math.round(100 * met / total);
+  $("contracts").innerHTML = `
+    <div class="bar"><div style="width:${pct}%"></div></div>
+    <div class="muted" style="font-size:11px;margin-bottom:6px">${met} of ${total} required contracts satisfied${state.data.contracts.task ? " · " + esc(state.data.contracts.task) : ""}</div>
+    <div id="contract-list"></div>`;
+  api("/api/contracts").then(payload => {
+    const el = $("contract-list"); if (!el) return;
+    el.innerHTML = (payload.contracts || []).map(c => `
+      <div class="contract">
+        <div class="top"><span class="chip ${c.status}">${esc(c.status.replace("_"," "))}</span><span class="id">${esc(c.id)}</span></div>
+        <div class="desc">${esc(c.claim)}</div>
+      </div>`).join("") || `<div class="dim" style="font-size:12px">No contracts.</div>`;
+  }).catch(() => {});
+}
+
+async function renderGraph() {
+  try {
+    const g = await api("/api/graph");
+    const nodes = Object.fromEntries(g.nodes.map(n => [n.id, n]));
+    const out = {};
+    g.edges.forEach(e => { (out[e.source] ||= []).push(e); });
+    const claims = g.nodes.filter(n => n.type === "claim");
+    if (!claims.length) { $("graph").innerHTML = `<div class="dim">No graph yet.</div>`; return; }
+    $("graph").innerHTML = claims.slice(0, 40).map(c => {
+      const supports = (out[c.id] || []).filter(e => e.relation === "supported_by");
+      const lines = supports.map(e => {
+        const ev = nodes[e.target]; if (!ev) return "";
+        const arts = (out[ev.id] || []).filter(x => x.relation === "depends_on").map(x => nodes[x.target]).filter(Boolean);
+        return `<div class="gsub">${ev.status === "invalidated" ? "⊘" : ev.meta.evidence_status === "pass" ? "✓" : ev.meta.evidence_status === "fail" ? "✗" : "•"} ${esc(ev.label)}${arts.length ? `<div class="gsub art">↳ ${arts.slice(0,3).map(a => esc(a.label)).join(" · ")}${arts.length>3?" …":""}</div>` : ""}</div>`;
+      }).join("");
+      return `<div class="gnode"><span class="chip ${c.status}">${esc(c.status.replace("_"," "))}</span> ${esc(c.label)}${lines}</div>`;
+    }).join("");
+  } catch (e) { $("graph").innerHTML = `<div class="dim">${esc(e.message)}</div>`; }
+}
+
+async function load() {
+  try {
+    state.data = await api("/api/status");
+    render();
+  } catch (e) {
+    $("overall-title").textContent = "Error";
+    $("overall-sub").textContent = e.message;
+  }
+}
+
+$("filters").addEventListener("click", (e) => {
+  const btn = e.target.closest("button"); if (!btn) return;
+  state.filter = btn.dataset.filter;
+  [...$("filters").children].forEach(b => b.classList.toggle("active", b === btn));
+  renderClaims();
+});
+
+$("claims").addEventListener("click", (e) => {
+  const row = e.target.closest(".claim"); if (!row) return;
+  const id = row.dataset.id;
+  if (state.expanded.has(id)) state.expanded.delete(id); else state.expanded.add(id);
+  renderClaims();
+});
+
+$("refresh").onclick = () => { load(); toast("Refreshed from the evidence store."); };
+
+$("verify-all").onclick = async () => {
+  $("verify-all").disabled = true; $("verify-all").textContent = "Verifying…";
+  try {
+    const res = await api("/api/verify", { method: "POST", headers: {"Content-Type":"application/json"}, body: "{}" });
+    state.data = res.status; render();
+    toast(`Re-verified ${res.verified} claim(s): ${res.passed} pass, ${res.failed} fail.`);
+  } catch (e) { toast("Verification failed: " + e.message); }
+  finally { $("verify-all").disabled = false; $("verify-all").textContent = "Re-verify all"; }
+};
+
+$("check-contracts").onclick = async () => {
+  try {
+    const res = await api("/api/contracts/check", { method: "POST", headers: {"Content-Type":"application/json"}, body: "{}" });
+    state.data = res.status; render();
+    const met = res.results.filter(r => r.met).length;
+    toast(`Contracts: ${met}/${res.results.length} satisfied.`);
+  } catch (e) { toast("Contract check failed: " + e.message); }
+};
+
+$("guard-strict").onclick = () => {
+  state.strict = !state.strict;
+  $("guard-strict").classList.toggle("danger", state.strict);
+  toast(state.strict ? "Strict mode: block on any unmet prerequisite." : "Normal mode.");
+};
+
+$("guard-check").onclick = async () => {
+  const command = $("guard-input").value.trim();
+  if (!command) return;
+  try {
+    const d = await api("/api/guard", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ command, strict: state.strict }) });
+    const checks = (d.checks || []).map(c => `<li>${c.satisfied ? "✓" : "✗"} ${esc(c.description)} <span class="dim">${esc(c.evidence || "")}</span></li>`).join("");
+    $("guard-result").innerHTML = `<div class="verdict ${d.verdict}"><strong>${esc(d.verdict.toUpperCase())}</strong> · risk ${esc(d.risk)}<ul>${checks || d.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>`;
+  } catch (e) { toast("Guard failed: " + e.message); }
+};
+
+$("copy-context").onclick = async () => {
+  try {
+    const res = await fetch("/api/snapshot?compact=1");
+    const text = await res.text();
+    await navigator.clipboard.writeText(text);
+    toast("Compact reality snapshot copied.");
+  } catch (e) { toast("Clipboard unavailable: " + e.message); }
+};
+
+load();
+</script>
+</body>
+</html>
