@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/contracts.schema.json",
+  "title": "VERITY evidence contracts",
+  "type": "object",
+  "required": ["contracts"],
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "task": {"type": "string"},
+    "contracts": {
+      "type": ["array", "object"],
+      "items": {
+        "type": "object",
+        "required": ["id", "claim", "verifier"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "claim": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "verifier": {"type": "string", "minLength": 1},
+          "args": {"type": "object"},
+          "required": {"type": "boolean", "default": true},
+          "command": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

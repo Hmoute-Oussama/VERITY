@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a reproducible VERITY problem
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please redact credentials, private URLs, and local paths.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact commands and minimal project setup.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VERITY version
+      placeholder: "verity --version"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, shell, and agent.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Output from `verity doctor` and `verity status --json` with secrets redacted.

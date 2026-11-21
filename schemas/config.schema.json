@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Hmoute-Oussama/VERITY/main/schemas/config.schema.json",
+  "title": "VERITY project configuration",
+  "type": "object",
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "project": {"type": "string"},
+    "verification": {
+      "type": "object",
+      "properties": {
+        "test_command": {"type": "string"},
+        "timeout_seconds": {"type": "integer", "minimum": 1},
+        "allow_exec": {"type": "boolean"},
+        "allowed_commands": {"type": "array", "items": {"type": "string"}},
+        "http_allow_hosts": {"type": "array", "items": {"type": "string"}},
+        "max_output_chars": {"type": "integer", "minimum": 1},
+        "security_scan": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "ttl_seconds": {"type": ["integer", "null"], "minimum": 1},
+        "track_all_code": {"type": "boolean"},
+        "history_limit": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": true
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "strict": {"type": "boolean"},
+        "block_risk": {"type": "string"},
+        "warn_risk": {"type": "string"},
+        "deny_commands": {"type": "array", "items": {"type": "string"}},
+        "allow_commands": {"type": "array", "items": {"type": "string"}},
+        "require_verification_before_push": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "database": {"type": "object"},
+    "ignore": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

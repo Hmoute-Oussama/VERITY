@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest a VERITY feature or verifier
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What agent or repository workflow is unsupported today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the expected command, claim, evidence, or integration.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples
+      description: Include inputs and expected verified, contradicted, or stale outputs.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Contribution checks
+      options:
+        - label: I searched existing issues first.
+        - label: I can help test this behavior.

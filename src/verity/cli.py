@@ -54,6 +54,7 @@ from .integrations import (
 from .models import ClaimDraft, ClaimStatus, EvidenceStatus, Risk, Verdict
 from .snapshot import build_agent_context, build_snapshot
 from .util import dump_yaml, relpath
+from .validation import validate_config, validate_contracts
 
 app = typer.Typer(
     add_completion=False,
@@ -1310,24 +1311,94 @@ def _hook_guard(
 
 
 @app.command()
-def doctor(ctx: typer.Context) -> None:
+def validate(
+    ctx: typer.Context,
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable output."),
+) -> None:
+    """Validate project configuration and evidence contracts."""
+    root = _root(ctx)
+    issues = validate_config(root) + validate_contracts(root)
+    payload = {
+        "valid": not issues,
+        "issues": [issue.to_dict() for issue in issues],
+    }
+    if json_out:
+        console.print_json(json.dumps(payload, indent=2))
+    elif issues:
+        err_console.print("[red]VERITY configuration needs attention:[/red]")
+        for issue in issues:
+            err_console.print(f"  [yellow]{escape(issue.path)}[/yellow]: {escape(issue.message)}")
+    else:
+        console.print("[green]Configuration and contracts are valid.[/green]")
+    raise typer.Exit(0 if not issues else 1)
+
+
+@app.command()
+def doctor(
+    ctx: typer.Context,
+    fix: bool = typer.Option(False, "--fix", help="Create missing default VERITY configuration."),
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable output."),
+) -> None:
     """Check the local VERITY installation."""
     root = _root(ctx)
+    repaired: list[str] = []
+    if fix and not verity_dir(root).is_dir():
+        root.mkdir(parents=True, exist_ok=True)
+        scaffold_config(root)
+        scaffold_contracts(root)
+        repaired.append("created .verity/config.yaml")
+        repaired.append("created .verity/contracts.yaml")
+        repaired.append("created local evidence database")
+
+    initialized = verity_dir(root).is_dir()
+    payload: dict[str, Any] = {
+        "version": __version__,
+        "project_root": str(root),
+        "initialized": initialized,
+        "git_repository": is_git_repo(root),
+        "repaired": repaired,
+    }
+    if initialized:
+        cfg = Config.load(root)
+        engine = Engine(root, config=cfg)
+        payload.update(
+            {
+                "database": str(engine.repo.path),
+                "project": engine.repo.project,
+                "claims": len(engine.repo.claims()),
+                "execution_allowed": cfg.verification.allow_exec,
+                "execution_mode": "allowlist only" if not cfg.verification.allow_exec else "enabled",
+            }
+        )
+        issues = validate_config(root) + validate_contracts(root)
+        payload["validation"] = {
+            "valid": not issues,
+            "issues": [issue.to_dict() for issue in issues],
+        }
+        engine.repo.close()
+
+    if json_out:
+        console.print_json(json.dumps(payload, indent=2))
+        return
+
     table = Table(box=None, pad_edge=False, header_style="bold bright_black")
     table.add_column("Check", style="cyan")
     table.add_column("Result")
     table.add_row("VERITY", __version__)
     table.add_row("Project root", str(root))
-    table.add_row("Initialized", "yes" if verity_dir(root).is_dir() else "no")
-    table.add_row("Git repository", "yes" if is_git_repo(root) else "no")
-    if verity_dir(root).is_dir():
-        cfg = Config.load(root)
-        engine = Engine(root, config=cfg)
-        table.add_row("Database", str(engine.repo.path))
-        table.add_row("Project", engine.repo.project)
-        table.add_row("Claims", str(len(engine.repo.claims())))
-        table.add_row("Execution allowed", "yes" if cfg.verification.allow_exec else "allowlist only")
-        engine.repo.close()
+    table.add_row("Initialized", "yes" if initialized else "no")
+    table.add_row("Git repository", "yes" if payload["git_repository"] else "no")
+    if initialized:
+        table.add_row("Database", str(payload["database"]))
+        table.add_row("Project", str(payload["project"]))
+        table.add_row("Claims", str(payload["claims"]))
+        table.add_row("Execution", str(payload["execution_mode"]))
+        if payload["validation"]["valid"]:
+            table.add_row("Configuration", "[green]valid[/green]")
+        else:
+            table.add_row("Configuration", "[red]issues found[/red]")
+    for item in repaired:
+        table.add_row("Repaired", item)
     console.print(table)
 
 

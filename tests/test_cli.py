@@ -10,6 +10,38 @@ from verity.cli import app
 runner = CliRunner()
 
 
+def test_validate_accepts_initialized_project(project: Path):
+    from verity.config import scaffold_config
+    from verity.contracts import scaffold_contracts
+
+    scaffold_config(project)
+    scaffold_contracts(project)
+    result = runner.invoke(app, ["-C", str(project), "validate", "--json"])
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output["valid"] is True
+
+
+def test_validate_reports_contract_problem(tmp_path: Path):
+    result = runner.invoke(app, ["-C", str(tmp_path), "validate", "--json"])
+
+    assert result.exit_code == 1
+    output = json.loads(result.stdout)
+    assert output["valid"] is False
+    assert output["issues"]
+
+
+def test_doctor_fix_initializes_project(tmp_path: Path):
+    result = runner.invoke(app, ["-C", str(tmp_path), "doctor", "--fix", "--json"])
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output["initialized"] is True
+    assert (tmp_path / ".verity" / "config.yaml").is_file()
+    assert (tmp_path / ".verity" / "contracts.yaml").is_file()
+
+
 def test_integrate_lists_supported_agents():
     result = runner.invoke(app, ["integrate", "--list"])
 

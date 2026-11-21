@@ -1,0 +1,26 @@
+name: "VERITY evidence check"
+description: "Initialize VERITY and check evidence contracts in a GitHub repository"
+inputs:
+  root:
+    description: "Repository root"
+    required: false
+    default: "."
+  fail-on:
+    description: "Open, contradicted, stale, or incomplete failures"
+    required: false
+    default: "contradicted"
+runs:
+  using: "composite"
+  steps:
+    - name: Install VERITY
+      shell: bash
+      run: python -m pip install .
+      working-directory: ${{ inputs.root }}
+    - name: Initialize project
+      shell: bash
+      run: verity --root "${{ inputs.root }}" init --no-gitignore
+    - name: Check contracts
+      shell: bash
+      run: |
+        verity --root "${{ inputs.root }}" validate --json
+        verity --root "${{ inputs.root }}" contract check --json

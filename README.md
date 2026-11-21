@@ -108,6 +108,16 @@ Result: completion is not justified.
 
 ### Install VERITY
 
+From PyPI when published:
+
+```bash
+pipx install verity-cli
+# or
+python -m pip install verity-cli
+```
+
+From source:
+
 ```bash
 git clone https://github.com/Hmoute-Oussama/VERITY.git
 cd VERITY
