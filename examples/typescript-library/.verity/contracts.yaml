@@ -1,0 +1,8 @@
+version: 1
+task: typescript_library
+contracts:
+  - id: package
+    claim: TypeScript package manifest exists.
+    verifier: file_exists
+    args: {paths: [package.json]}
+    required: true

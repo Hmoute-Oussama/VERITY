@@ -10,4 +10,5 @@
 - [Architecture](architecture.md)
 - [1.0 API stability](api-stability.md)
 - [Migration guide](migration-guide.md)
+- [Integration matrix](../examples/README.md)
 - [Security policy](../SECURITY.md)

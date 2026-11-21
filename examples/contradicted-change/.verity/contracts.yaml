@@ -1,0 +1,8 @@
+version: 1
+task: contradiction
+contracts:
+  - id: missing_login
+    claim: The login route implementation exists.
+    verifier: file_exists
+    args: {paths: [missing_login.py]}
+    required: true

@@ -1,0 +1,13 @@
+version: 1
+task: monorepo
+contracts:
+  - id: api_package
+    claim: API package source exists.
+    verifier: file_exists
+    args: {paths: ["packages/api/src/main.py"]}
+    required: true
+  - id: web_package
+    claim: Web package source exists.
+    verifier: file_exists
+    args: {paths: ["packages/web/src/index.ts"]}
+    required: true

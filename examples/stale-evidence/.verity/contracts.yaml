@@ -1,0 +1,8 @@
+version: 1
+task: stale_evidence
+contracts:
+  - id: source_file
+    claim: The source file exists.
+    verifier: file_exists
+    args: {paths: [source.py]}
+    required: true

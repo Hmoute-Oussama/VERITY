@@ -1,0 +1,8 @@
+version: 1
+task: compose_stack
+contracts:
+  - id: compose_config
+    claim: Docker Compose configuration exists.
+    verifier: config_valid
+    args: {paths: [compose.yaml]}
+    required: true

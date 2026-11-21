@@ -1,0 +1,4 @@
+version: 1
+project: stale-evidence
+evidence:
+  ttl_seconds: null

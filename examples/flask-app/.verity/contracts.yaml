@@ -1,0 +1,8 @@
+version: 1
+task: flask_app
+contracts:
+  - id: app_symbol
+    claim: The Flask application entrypoint exists.
+    verifier: code_symbol
+    args: {symbol: create_app}
+    required: true

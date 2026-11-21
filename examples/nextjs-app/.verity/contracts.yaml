@@ -1,0 +1,13 @@
+version: 1
+task: nextjs_app
+contracts:
+  - id: package
+    claim: The package manifest exists.
+    verifier: file_exists
+    args: {paths: [package.json]}
+    required: true
+  - id: build_script
+    claim: The package defines a build script.
+    verifier: json_path
+    args: {path: package.json, json_path: scripts.build, expect: ["next build"]}
+    required: true

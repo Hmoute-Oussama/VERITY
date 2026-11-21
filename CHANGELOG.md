@@ -17,6 +17,8 @@ Semantic Versioning.
 - Machine-readable API version metadata.
 - Database schema migration tracking and forward-migration safeguards.
 - 1.0 compatibility and database migration documentation.
+- Public integration fixture matrix for FastAPI, Flask, Next.js, Docker Compose,
+  monorepos, TypeScript, Java, Go, contradictions, stale evidence, and dependencies.
 
 ## [0.2.0] - 2026-11-21
 

@@ -1,0 +1,8 @@
+version: 1
+task: go_service
+contracts:
+  - id: service
+    claim: Go service source exists.
+    verifier: file_exists
+    args: {paths: [main.go]}
+    required: true

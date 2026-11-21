@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: verity-integration-matrix
+        name: VERITY integration matrix
+        entry: python examples/run_matrix.py
+        language: system
+        pass_filenames: false
+        always_run: true

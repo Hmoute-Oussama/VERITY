@@ -34,6 +34,7 @@ dev = [
   "pytest>=8",
   "build>=1",
   "twine>=5",
+  "pre-commit>=3",
 ]
 
 [project.urls]

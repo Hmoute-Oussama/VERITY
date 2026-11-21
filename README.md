@@ -108,6 +108,20 @@ Result: completion is not justified.
 | <b>4. INVALIDATE</b> | Changed or expired dependencies become stale | Prevents old proof being reused |
 | <b>5. GUARD</b> | Shell actions are checked before execution | Blocks concrete missing prerequisites |
 
+## Real-project integration matrix
+
+VERITY includes runnable examples across FastAPI, Flask, Next.js, Docker Compose,
+monorepos, TypeScript, Java, Go, contradictions, stale evidence, and dependency
+changes:
+
+- [Integration matrix](examples/README.md)
+- [Public FastAPI example](https://github.com/Hmoute-Oussama/VERITY-integration-fastapi-auth)
+- [Public Docker Compose example](https://github.com/Hmoute-Oussama/VERITY-integration-docker-compose)
+- [Public stale-evidence example](https://github.com/Hmoute-Oussama/VERITY-integration-stale-evidence)
+
+The matrix runs through GitHub Actions on Linux, macOS, and Windows, and also
+runs through pre-commit.
+
 <div align="center">
 
 ### Published releases
