@@ -13,6 +13,9 @@
 
 [![Tests](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/tests.yml/badge.svg)](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/tests.yml)
 [![README pulse](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/update-readme.yml/badge.svg)](https://github.com/Hmoute-Oussama/VERITY/actions/workflows/update-readme.yml)
+[![PyPI](https://img.shields.io/pypi/v/verity-evidence?color=22c55e&label=PyPI)](https://pypi.org/project/verity-evidence/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/verity-evidence?color=3776ab)](https://pypi.org/project/verity-evidence/)
+[![Downloads](https://img.shields.io/pypi/dm/verity-evidence?color=38bdf8&label=downloads)](https://pypi.org/project/verity-evidence/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](pyproject.toml)
 [![MCP](https://img.shields.io/badge/MCP-ready-a855f7.svg)](src/verity/server/mcp.py)
@@ -21,6 +24,17 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Hmoute-Oussama/VERITY?style=flat&color=f59e0b)](https://github.com/Hmoute-Oussama/VERITY/stargazers)
 [![Issues](https://img.shields.io/github/issues/Hmoute-Oussama/VERITY?style=flat&color=ef4444)](https://github.com/Hmoute-Oussama/VERITY/issues)
 [![Pull requests](https://img.shields.io/github/issues-pr/Hmoute-Oussama/VERITY?style=flat&color=22c55e)](https://github.com/Hmoute-Oussama/VERITY/pulls)
+
+</div>
+
+<div align="center">
+
+```bash
+pipx install verity-evidence
+verity --version
+```
+
+**Now available on PyPI — [verity-evidence v0.2.0](https://pypi.org/project/verity-evidence/)**
 
 </div>
 
@@ -58,7 +72,7 @@ Result: completion is not justified.
 |:---:|:---:|:---:|:---:|
 | **7** | **30** | **9** | **17** |
 
-**Branch:** `main` · **Latest:** `38c8e05 · 2026-11-21` · **Pulse:** `2026-11-21 19:51 UTC`
+**Branch:** `main` · **Latest:** `38c8e05 · 2026-11-21` · **Release:** `v0.2.0`
 
 </div>
 <!-- PROJECT-PULSE:END -->
@@ -94,6 +108,23 @@ Result: completion is not justified.
 | <b>4. INVALIDATE</b> | Changed or expired dependencies become stale | Prevents old proof being reused |
 | <b>5. GUARD</b> | Shell actions are checked before execution | Blocks concrete missing prerequisites |
 
+<div align="center">
+
+### Published releases
+
+[![PyPI Release](https://img.shields.io/pypi/v/verity-evidence?label=latest&logo=pypi&logoColor=white&color=22c55e)](https://pypi.org/project/verity-evidence/)
+[![GitHub Release](https://img.shields.io/github/v/release/Hmoute-Oussama/VERITY?label=GitHub&logo=github&color=38bdf8)](https://github.com/Hmoute-Oussama/VERITY/releases/latest)
+
+Isolated installation:
+
+```bash
+pipx install verity-evidence
+```
+
+Beta package release: **`v0.2.0`** · Release workflow and PyPI attestation verified.
+
+</div>
+
 ## Why VERITY is different
 
 | Capability | What it prevents |
@@ -108,12 +139,23 @@ Result: completion is not justified.
 
 ### Install VERITY
 
-From PyPI when published:
+Recommended: isolated user installation with `pipx`
 
 ```bash
 pipx install verity-evidence
-# or
+```
+
+Standard pip installation:
+
+```bash
 python -m pip install verity-evidence
+```
+
+Verify the installed release:
+
+```bash
+verity --version
+# VERITY 0.2.0 — ...
 ```
 
 From source:
@@ -358,7 +400,10 @@ Python 3.10+; dependencies are Typer, Rich, and PyYAML.
 
 ## Roadmap
 
-- GitHub Action and pull-request evidence comments
+- ~~GitHub Action and pull-request evidence comments~~ (beta workflows included)
+- ~~Community security and support documentation~~
+- ~~Cross-platform test matrix~~
+- ~~PyPI trusted publishing and signed package provenance~~
 - Signed evidence bundles for CI
 - OpenAPI, migration, and runtime trace verifiers
 - Shared team evidence store
